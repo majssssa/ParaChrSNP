@@ -117,4 +117,5 @@ snakemake --snakefile Snakefile --configfile config.yaml --cores 12 --use-singul
 - `dis/ParaChrSNP.p_dis.nwk`: VCF2Dis 输出的 Newick 格式系统发育树。
 
 
-
+## 联系方式
+VX：mjp59876

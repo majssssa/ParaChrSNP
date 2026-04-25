@@ -6,6 +6,8 @@
 .codex
 AGENTS.md
 .DS_Store
+*.swp
+*.swo
 
 # Singularity/Apptainer images and temporary build files
 *.sif

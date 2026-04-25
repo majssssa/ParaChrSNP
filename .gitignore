@@ -85,3 +85,6 @@ __pycache__/
 .Rhistory
 .RData
 .Rproj.user/
+
+# gitconfig
+.gitignore

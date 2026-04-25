@@ -1,0 +1,11 @@
+rule bam_rmdup:
+    input:
+        bam="sorted_reads/{sample}.sort.bam",
+        dict=reference_dict(config['reference'])
+    output:
+        bam=protected("duplicate_removed/{sample}.rmdup.bam"),
+        matrix="duplicate_removed/{sample}.dup.txt"
+    log:
+        "logs/rmdup/{sample}.log"
+    shell:
+        "gatk --java-options \"-Xmx10g\" MarkDuplicates -I {input.bam} -O {output.bam} -M {output.matrix} --REMOVE_DUPLICATES true > {log} 2>&1"

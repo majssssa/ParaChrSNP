@@ -1,0 +1,9 @@
+rule get_chr_list:
+    input:
+        gvcfs=lambda wildcards: expand("gvcf/{sample}.{chrom}.g.vcf.gz", sample=wildcards.sample, chrom=config["chromosomes"])
+    output:
+        "gvcf/{sample}.list"
+    shell:
+        """
+        printf "%s\n" {input.gvcfs} > {output}
+        """

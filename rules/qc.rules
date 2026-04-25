@@ -1,0 +1,30 @@
+rule qc:
+    input:
+        expand("{prefix}.{read}.fq.gz", prefix=list(config["samples"].values()), read=[1, 2])
+    output:
+        done="qc/rastqc.done"
+    params:
+        outdir="qc",
+        extra=config["params"]["qc"].get("extra", "--nozip")
+    threads:
+        config["params"]["qc"]["threads"]
+    log:
+        "logs/qc/rastqc.log"
+    shell:
+        """
+        mkdir -p {params.outdir} logs/qc
+        rm -f {output.done}
+        rastqc {params.extra} -t {threads} -o {params.outdir} {input} > {log} 2>&1
+
+        if grep -q "^Error processing" {log}; then
+            echo "RastQC reported input processing errors. Check {log}." >> {log}
+            exit 1
+        fi
+
+        if [ ! -s {params.outdir}/summary.tsv ]; then
+            echo "RastQC summary file is empty or missing: {params.outdir}/summary.tsv" >> {log}
+            exit 1
+        fi
+
+        touch {output.done}
+        """

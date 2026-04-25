@@ -1,0 +1,35 @@
+rule bwa_mem:
+    input:
+        amb=config['reference'] + ".amb",
+        ann=config['reference'] + ".ann",
+        bwt=config['reference'] + ".bwt",
+        pac=config['reference'] + ".pac",
+        sa=config['reference'] + ".sa",
+        ref=config['reference'],
+        fq1="clean_reads/{sample}.1.clean.fq.gz",
+        fq2="clean_reads/{sample}.2.clean.fq.gz"
+    output:
+        "sorted_reads/{sample}.sort.bam"
+    params:
+        rg=r"@RG\tID:{sample}\tPL:illumina\tPU:illumina\tLB:{sample}\tSM:{sample}",
+        sort_prefix="sorted_reads/{sample}"
+    log:
+        "logs/bwa_mem/{sample}.log"
+    threads: config['params']['bwa']['bwa_threads']
+    shell:
+        """
+        (
+            bwa mem \
+                -R '{params.rg}' \
+                -t {threads} \
+                {input.ref} \
+                {input.fq1} \
+                {input.fq2} \
+            | samtools sort \
+                -@ {threads} \
+                -T {params.sort_prefix} \
+                -O bam \
+                -o {output} \
+                -
+        ) > {log} 2>&1
+        """

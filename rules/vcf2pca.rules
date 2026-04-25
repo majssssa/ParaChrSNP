@@ -1,0 +1,28 @@
+rule vcf2pca:
+    input:
+        vcf="result_vcfs/combined.snp.filtered.vcf.gz",
+        sample_group=lambda wildcards: [config["params"]["vcf2pca"].get("sample_group")] if config["params"]["vcf2pca"].get("sample_group") else []
+    output:
+        eigenvec=config["params"]["vcf2pca"]["output_prefix"] + ".eigenvec",
+        eigenval=config["params"]["vcf2pca"]["output_prefix"] + ".eigenval"
+    params:
+        executable=config["params"]["vcf2pca"]["executable"],
+        output_prefix=config["params"]["vcf2pca"]["output_prefix"],
+        extra=config["params"]["vcf2pca"].get("extra", ""),
+        sample_group_arg=lambda wildcards, input: f"-InSampleGroup {input.sample_group}" if input.sample_group else ""
+    threads:
+        config["params"]["vcf2pca"]["threads"]
+    log:
+        "logs/vcf2pca/vcf2pca.log"
+    shell:
+        """
+        mkdir -p $(dirname {params.output_prefix})
+
+        {params.executable} \
+            -InVCF {input.vcf} \
+            -OutPut {params.output_prefix} \
+            {params.sample_group_arg} \
+            -Threads {threads} \
+            {params.extra} \
+            > {log} 2>&1
+        """

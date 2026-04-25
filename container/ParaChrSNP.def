@@ -1,0 +1,64 @@
+Bootstrap: docker
+From: mambaorg/micromamba:1.5.10
+
+%files
+    container/environment.yaml /opt/ParaChrSNP/container_environment.yaml
+    Snakefile /opt/ParaChrSNP/Snakefile
+    rules /opt/ParaChrSNP/rules
+    scripts /opt/ParaChrSNP/scripts
+    README.md /opt/ParaChrSNP/README.md
+    /home/majunpeng/Software/VCF2PCACluster /opt/ParaChrSNP/src/VCF2PCACluster
+    /home/majunpeng/Software/VCF2Dis-1.55 /opt/ParaChrSNP/src/VCF2Dis-1.55
+    /home/majunpeng/.cargo/bin/rastqc /opt/ParaChrSNP/bin/rastqc
+
+%post
+    set -eux
+
+    micromamba create -y -n parachrsnp -f /opt/ParaChrSNP/container_environment.yaml
+    micromamba clean -a -y
+
+    mkdir -p /opt/ParaChrSNP/bin /opt/ParaChrSNP/src
+
+    if [ -x /opt/ParaChrSNP/src/VCF2Dis-1.55/bin/VCF2Dis ]; then
+        cp -L /opt/ParaChrSNP/src/VCF2Dis-1.55/bin/VCF2Dis /opt/ParaChrSNP/bin/VCF2Dis
+    else
+        cd /opt/ParaChrSNP/src/VCF2Dis-1.55
+        sh make.sh
+        cp -L bin/VCF2Dis /opt/ParaChrSNP/bin/VCF2Dis
+    fi
+
+    if [ -x /opt/ParaChrSNP/src/VCF2PCACluster/bin/VCF2PCACluster ]; then
+        cp /opt/ParaChrSNP/src/VCF2PCACluster/bin/VCF2PCACluster /opt/ParaChrSNP/bin/VCF2PCACluster
+    else
+        make -C /opt/ParaChrSNP/src/VCF2PCACluster
+        cp /opt/ParaChrSNP/src/VCF2PCACluster/bin/VCF2PCACluster /opt/ParaChrSNP/bin/VCF2PCACluster
+    fi
+
+    chmod 755 /opt/ParaChrSNP/bin/VCF2Dis /opt/ParaChrSNP/bin/VCF2PCACluster /opt/ParaChrSNP/bin/rastqc
+    chmod -R a+rX /opt/ParaChrSNP
+
+%environment
+    export PATH=/opt/ParaChrSNP/bin:/opt/conda/envs/parachrsnp/bin:$PATH
+    export LD_LIBRARY_PATH=/opt/conda/envs/parachrsnp/lib:$LD_LIBRARY_PATH
+    export LC_ALL=C
+    export LANG=C
+
+%runscript
+    exec snakemake "$@"
+
+%test
+    snakemake --version
+    bwa 2>&1 | head -n 1
+    samtools --version | head -n 1
+    gatk --version
+    fastp --version
+    plink --version
+    run_pipeline.pl -h >/dev/null 2>&1 || true
+    rastqc --version
+    VCF2Dis 2>&1 | head -n 1 || true
+    VCF2PCACluster 2>&1 | head -n 1 || true
+
+%labels
+    Author Junpeng_Ma
+    Project ParaChrSNP
+    Description Snakemake workflow container for chromosome-wise SNP calling and VCF downstream conversion

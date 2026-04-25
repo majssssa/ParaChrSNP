@@ -1,0 +1,20 @@
+name: parachrsnp
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - snakemake-minimal
+  - bwa
+  - samtools
+  - bcftools
+  - gatk4
+  - picard
+  - fastp
+  - plink
+  - tassel
+  - pandas
+  - numpy
+  - matplotlib
+  - pip

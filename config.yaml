@@ -1,0 +1,92 @@
+reference: "reference/Sxygenome.fa"
+
+container:
+    image: "ParaChrSNP.sif"
+
+samples:
+    1-01: "raw_fastq/1-01"
+    1-02: "raw_fastq/1-02"
+chromosomes:
+
+  - Chr01
+  - Chr02
+  - Chr03
+  - Chr04
+  - Chr05
+  - Chr06
+  - Chr07
+  - Chr08
+  - Chr09
+  - Chr10
+  - Chr11
+  - Chr12
+
+params:
+    qc:
+        threads: 8
+        extra: "--nozip"
+
+    bwa:
+        bwa_threads: 16
+
+    fastp:
+        fastp_threads: 16
+
+    haplotype_caller:
+        java_options: "--java-options \"-Xms512m -Xmx4g\""
+
+    genotype_gvcfs:
+        java_options: "--java-options \"-Xms512m -Xmx128g\""
+
+    combine_vcf:
+        java_options: "--java-options \"-Xms512m -Xmx128g\""
+
+    snp_filter:
+        filter_name: "SNP_filter"
+        thresholds:
+            qd: 2.0
+            mq: 40.0
+            fs: 60.0
+            sor: 3.0
+            mq_rank_sum: -12.5
+            read_pos_rank_sum: -8.0
+
+    indel_filter:
+        filter_name: "INDEL_filter"
+        thresholds:
+            qd: 2.0
+            fs: 200.0
+            sor: 10.0
+            mq_rank_sum: -12.5
+            read_pos_rank_sum: -8.0
+
+    vcf_missing:
+        output_prefix: "missing/combined.snp.filtered"
+        plot_prefix: "missing/combined.snp.filtered.miss_check"
+        plot_script: "scripts/plink-missing.py"
+        extra: "--allow-extra-chr"
+
+    vcf_convert:
+        input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
+        output_prefix: "format_convert/combined.snp.filtered"
+        plink_extra: "--allow-extra-chr"
+        tassel_executable: "run_pipeline.pl"
+        tassel_memory: "-Xmx10g"
+        tassel_extra: ""
+
+    vcf2pca:
+        enabled: true
+        executable: "VCF2PCACluster"
+        sample_group: ""
+        output_prefix: "pca/ParaChrSNP"
+        threads: 16
+        extra: ""
+
+    vcf2dis:
+        enabled: true
+        executable: "VCF2Dis"
+        sample_group: ""
+        output_matrix: "dis/ParaChrSNP.p_dis.mat"
+        output_tree: "dis/ParaChrSNP.p_dis.nwk"
+        tree_method: 1
+        extra: ""

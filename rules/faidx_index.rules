@@ -1,0 +1,9 @@
+rule faidx_index:
+    input:
+        config['reference']
+    output:
+        config['reference'] + ".fai"
+    log:
+        "logs/index/faidx_index.log"
+    shell:
+        "samtools faidx {input} > {log} 2>&1"

@@ -1,0 +1,37 @@
+rule snp_filter:
+    input:
+        vcf="result_vcfs/combined.snp.vcf.gz",
+        ref=config['reference']
+    output:
+        vcf="result_vcfs/combined.snp.filtered.vcf.gz"
+    log:
+        "logs/gatk/filter/snp.log"
+    params:
+        filters=config["params"]["snp_filter"]["filter_name"],
+        expression=(
+            "QD < {qd} || MQ < {mq} || FS > {fs} || SOR > {sor} || "
+            "MQRankSum < {mq_rank_sum} || ReadPosRankSum < {read_pos_rank_sum}"
+        ).format(**config["params"]["snp_filter"]["thresholds"])
+    shell:
+        """
+        tmp_prefix=$(mktemp -u result_vcfs/combined.snp.marked.tmp.XXXXXX)
+        marked_vcf="$tmp_prefix.vcf.gz"
+        trap 'rm -f "$marked_vcf" "$marked_vcf.tbi" "$marked_vcf.idx"' EXIT
+
+        gatk VariantFiltration \
+            -R {input.ref} \
+            -V {input.vcf} \
+            --filter-expression "{params.expression}" \
+            --filter-name "{params.filters}" \
+            -O "$marked_vcf" \
+            > {log} 2>&1
+
+        gatk SelectVariants \
+            -R {input.ref} \
+            -V "$marked_vcf" \
+            --exclude-filtered \
+            -O {output.vcf} \
+            >> {log} 2>&1
+
+        rm -f "$marked_vcf" "$marked_vcf.tbi"
+        """

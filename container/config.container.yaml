@@ -1,0 +1,227 @@
+reference: "reference/Sxygenome.fa"
+
+container:
+    image: "ParaChrSNP.sif"
+
+samples:
+    1-01: "raw_fastq/1-01"
+    1-02: "raw_fastq/1-02"
+    1-03: "raw_fastq/1-03"
+    1-04: "raw_fastq/1-04"
+    1-05: "raw_fastq/1-05"
+    1-06: "raw_fastq/1-06"
+    1-07: "raw_fastq/1-07"
+    1-08: "raw_fastq/1-08"
+    1-09: "raw_fastq/1-09"
+    2-01: "raw_fastq/2-01"
+    2-02: "raw_fastq/2-02"
+    2-03: "raw_fastq/2-03"
+    2-04: "raw_fastq/2-04"
+    2-05: "raw_fastq/2-05"
+    2-06: "raw_fastq/2-06"
+    2-07: "raw_fastq/2-07"
+    2-08: "raw_fastq/2-08"
+    2-09: "raw_fastq/2-09"
+    2-10: "raw_fastq/2-10"
+    2-11: "raw_fastq/2-11"
+    2-12: "raw_fastq/2-12"
+    2-13: "raw_fastq/2-13"
+    2-14: "raw_fastq/2-14"
+    2-15: "raw_fastq/2-15"
+    2-16: "raw_fastq/2-16"
+    2-17: "raw_fastq/2-17"
+    2-18: "raw_fastq/2-18"
+    2-19: "raw_fastq/2-19"
+    2-20: "raw_fastq/2-20"
+    2-21: "raw_fastq/2-21"
+    2-22: "raw_fastq/2-22"
+    2-23: "raw_fastq/2-23"
+    2-24: "raw_fastq/2-24"
+    2-25: "raw_fastq/2-25"
+    2-26: "raw_fastq/2-26"
+    2-27: "raw_fastq/2-27"
+    2-28: "raw_fastq/2-28"
+    2-29: "raw_fastq/2-29"
+    2-30: "raw_fastq/2-30"
+    2-31: "raw_fastq/2-31"
+    2-32: "raw_fastq/2-32"
+    2-33: "raw_fastq/2-33"
+    2-34: "raw_fastq/2-34"
+    2-35: "raw_fastq/2-35"
+    2-36: "raw_fastq/2-36"
+    2-37: "raw_fastq/2-37"
+    2-38: "raw_fastq/2-38"
+    2-39: "raw_fastq/2-39"
+    2-40: "raw_fastq/2-40"
+    2-41: "raw_fastq/2-41"
+    2-42: "raw_fastq/2-42"
+    2-43: "raw_fastq/2-43"
+    2-44: "raw_fastq/2-44"
+    2-45: "raw_fastq/2-45"
+    2-46: "raw_fastq/2-46"
+    2-47: "raw_fastq/2-47"
+    2-48: "raw_fastq/2-48"
+    2-49: "raw_fastq/2-49"
+    2-50: "raw_fastq/2-50"
+    2-51: "raw_fastq/2-51"
+    2-52: "raw_fastq/2-52"
+    2-53: "raw_fastq/2-53"
+    2-54: "raw_fastq/2-54"
+    2-55: "raw_fastq/2-55"
+    2-56: "raw_fastq/2-56"
+    2-57: "raw_fastq/2-57"
+    2-58: "raw_fastq/2-58"
+    2-59: "raw_fastq/2-59"
+    2-60: "raw_fastq/2-60"
+    2-61: "raw_fastq/2-61"
+    2-62: "raw_fastq/2-62"
+    2-63: "raw_fastq/2-63"
+    2-64: "raw_fastq/2-64"
+    2-65: "raw_fastq/2-65"
+    2-66: "raw_fastq/2-66"
+    2-67: "raw_fastq/2-67"
+    2-68: "raw_fastq/2-68"
+    2-69: "raw_fastq/2-69"
+    2-70: "raw_fastq/2-70"
+    2-71: "raw_fastq/2-71"
+    2-72: "raw_fastq/2-72"
+    2-73: "raw_fastq/2-73"
+    2-74: "raw_fastq/2-74"
+    2-75: "raw_fastq/2-75"
+    2-76: "raw_fastq/2-76"
+    2-77: "raw_fastq/2-77"
+    2-78: "raw_fastq/2-78"
+    2-79: "raw_fastq/2-79"
+    2-80: "raw_fastq/2-80"
+    2-81: "raw_fastq/2-81"
+    2-82: "raw_fastq/2-82"
+    2-83: "raw_fastq/2-83"
+    2-84: "raw_fastq/2-84"
+    2-85: "raw_fastq/2-85"
+    2-86: "raw_fastq/2-86"
+    2-87: "raw_fastq/2-87"
+    2-88: "raw_fastq/2-88"
+    2-89: "raw_fastq/2-89"
+    2-90: "raw_fastq/2-90"
+    2-91: "raw_fastq/2-91"
+    2-92: "raw_fastq/2-92"
+    2-93: "raw_fastq/2-93"
+    2-94: "raw_fastq/2-94"
+    2-95: "raw_fastq/2-95"
+    2-96: "raw_fastq/2-96"
+    3-01: "raw_fastq/3-01"
+    3-02: "raw_fastq/3-02"
+    3-03: "raw_fastq/3-03"
+    3-04: "raw_fastq/3-04"
+    3-05: "raw_fastq/3-05"
+    3-06: "raw_fastq/3-06"
+    3-07: "raw_fastq/3-07"
+    3-08: "raw_fastq/3-08"
+    3-09: "raw_fastq/3-09"
+    3-10: "raw_fastq/3-10"
+    3-11: "raw_fastq/3-11"
+    3-12: "raw_fastq/3-12"
+    4-01: "raw_fastq/4-01"
+    4-02: "raw_fastq/4-02"
+    4-03: "raw_fastq/4-03"
+    4-04: "raw_fastq/4-04"
+    4-05: "raw_fastq/4-05"
+    4-06: "raw_fastq/4-06"
+    4-07: "raw_fastq/4-07"
+    4-08: "raw_fastq/4-08"
+    4-09: "raw_fastq/4-09"
+    4-10: "raw_fastq/4-10"
+    4-11: "raw_fastq/4-11"
+    4-12: "raw_fastq/4-12"
+    4-13: "raw_fastq/4-13"
+    4-14: "raw_fastq/4-14"
+    4-15: "raw_fastq/4-15"
+    4-16: "raw_fastq/4-16"
+    4-17: "raw_fastq/4-17"
+    4-18: "raw_fastq/4-18"
+    4-19: "raw_fastq/4-19"
+    4-20: "raw_fastq/4-20"
+    4-21: "raw_fastq/4-21"
+
+chromosomes:
+
+  - Chr01
+  - Chr02
+  - Chr03
+  - Chr04
+  - Chr05
+  - Chr06
+  - Chr07
+  - Chr08
+  - Chr09
+  - Chr10
+  - Chr11
+  - Chr12
+
+params:
+    qc:
+        threads: 8
+        extra: "--nozip"
+
+    bwa:
+        bwa_threads: 16
+
+    fastp:
+        fastp_threads: 16
+
+    haplotype_caller:
+        java_options: "--java-options \"-Xms512m -Xmx4g\""
+
+    genotype_gvcfs:
+        java_options: "--java-options \"-Xms512m -Xmx4g\""
+
+    combine_vcf:
+        java_options: "--java-options \"-Xms512m -Xmx4g\""
+
+    snp_filter:
+        filter_name: "SNP_filter"
+        thresholds:
+            qd: 2.0
+            mq: 40.0
+            fs: 60.0
+            sor: 3.0
+            mq_rank_sum: -12.5
+            read_pos_rank_sum: -8.0
+
+    indel_filter:
+        filter_name: "INDEL_filter"
+        thresholds:
+            qd: 2.0
+            fs: 200.0
+            sor: 10.0
+            mq_rank_sum: -12.5
+            read_pos_rank_sum: -8.0
+
+    vcf_missing:
+        output_prefix: "missing/combined.snp.filtered"
+        plot_prefix: "missing/combined.snp.filtered.miss_check"
+        plot_script: "scripts/plink-missing.py"
+        extra: "--allow-extra-chr"
+
+    vcf_convert:
+        input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
+        output_prefix: "format_convert/combined.snp.filtered"
+        plink_extra: "--allow-extra-chr"
+        tassel_executable: "run_pipeline.pl"
+        tassel_memory: "-Xmx10g"
+        tassel_extra: ""
+
+    vcf2pca:
+        executable: "VCF2PCACluster"
+        sample_group: "pop.info"
+        output_prefix: "pca/ParaChrSNP"
+        threads: 16
+        extra: ""
+
+    vcf2dis:
+        executable: "VCF2Dis"
+        sample_group: "pop.info"
+        output_matrix: "dis/ParaChrSNP.p_dis.mat"
+        output_tree: "dis/ParaChrSNP.p_dis.nwk"
+        tree_method: 1
+        extra: ""

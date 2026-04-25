@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1180" viewBox="0 0 1800 1180" role="img" aria-labelledby="title desc">
+  <title id="title">ParaChrSNP workflow overview</title>
+  <desc id="desc">A publication-ready overview of the ParaChrSNP Snakemake and Singularity workflow for chromosome-wise SNP calling and population genomic analysis.</desc>
+  <defs>
+    <style>
+      .bg { fill: #ffffff; }
+      .title { font-family: Arial, Helvetica, sans-serif; font-size: 44px; font-weight: 700; fill: #17212b; }
+      .subtitle { font-family: Arial, Helvetica, sans-serif; font-size: 24px; fill: #52616b; }
+      .stage { font-family: Arial, Helvetica, sans-serif; font-size: 21px; font-weight: 700; fill: #1f2933; }
+      .box-title { font-family: Arial, Helvetica, sans-serif; font-size: 21px; font-weight: 700; fill: #1f2933; }
+      .box-text { font-family: Arial, Helvetica, sans-serif; font-size: 17px; fill: #334e68; }
+      .small { font-family: Arial, Helvetica, sans-serif; font-size: 15px; fill: #627d98; }
+      .panel { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.4; }
+      .input { fill: #fef9c3; stroke: #ca8a04; stroke-width: 2.2; }
+      .process { fill: #e0f2fe; stroke: #0284c7; stroke-width: 2.2; }
+      .variant { fill: #dcfce7; stroke: #16a34a; stroke-width: 2.2; }
+      .filter { fill: #fae8ff; stroke: #a21caf; stroke-width: 2.2; }
+      .output { fill: #ffedd5; stroke: #ea580c; stroke-width: 2.2; }
+      .optional { fill: #eef2ff; stroke: #4f46e5; stroke-width: 2.2; stroke-dasharray: 8 5; }
+      .container { fill: #f1f5f9; stroke: #64748b; stroke-width: 2; }
+      .arrow { fill: none; stroke: #475569; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrowhead); }
+      .arrow-light { fill: none; stroke: #94a3b8; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrowhead-light); }
+    </style>
+    <marker id="arrowhead" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M1,1 L11,6 L1,11 Z" fill="#475569"/>
+    </marker>
+    <marker id="arrowhead-light" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M1,1 L11,6 L1,11 Z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1800" height="1180"/>
+  <text class="title" x="85" y="72">ParaChrSNP</text>
+  <text class="subtitle" x="85" y="111">A portable Snakemake/Singularity workflow for chromosome-wise SNP calling and population genomic analysis</text>
+
+  <rect class="panel" x="65" y="150" width="1670" height="850"/>
+  <line x1="390" y1="150" x2="390" y2="1000" stroke="#e2e8f0" stroke-width="2"/>
+  <line x1="710" y1="150" x2="710" y2="1000" stroke="#e2e8f0" stroke-width="2"/>
+  <line x1="1030" y1="150" x2="1030" y2="1000" stroke="#e2e8f0" stroke-width="2"/>
+  <line x1="1350" y1="150" x2="1350" y2="1000" stroke="#e2e8f0" stroke-width="2"/>
+
+  <text class="stage" x="135" y="190">Inputs</text>
+  <text class="stage" x="455" y="190">Pre-processing</text>
+  <text class="stage" x="792" y="190">Alignment</text>
+  <text class="stage" x="1080" y="190">Variant calling</text>
+  <text class="stage" x="1415" y="190">Downstream outputs</text>
+
+  <rect class="input" x="115" y="235" width="220" height="88" rx="6"/>
+  <text class="box-title" x="140" y="269">Paired-end reads</text>
+  <text class="box-text" x="140" y="298">raw_fastq/*.fq.gz</text>
+
+  <rect class="input" x="115" y="370" width="220" height="88" rx="6"/>
+  <text class="box-title" x="140" y="404">Reference genome</text>
+  <text class="box-text" x="140" y="433">reference/*.fa</text>
+
+  <rect class="input" x="115" y="505" width="220" height="88" rx="6"/>
+  <text class="box-title" x="140" y="539">Configuration</text>
+  <text class="box-text" x="140" y="568">config.yaml</text>
+
+  <rect class="process" x="435" y="220" width="220" height="88" rx="6"/>
+  <text class="box-title" x="460" y="254">Raw-read QC</text>
+  <text class="box-text" x="460" y="283">RastQC reports</text>
+
+  <rect class="process" x="435" y="345" width="220" height="88" rx="6"/>
+  <text class="box-title" x="460" y="379">Read trimming</text>
+  <text class="box-text" x="460" y="408">fastp cleaned FASTQ</text>
+
+  <rect class="process" x="435" y="470" width="220" height="88" rx="6"/>
+  <text class="box-title" x="460" y="504">Reference indexes</text>
+  <text class="box-text" x="460" y="533">bwa, samtools, GATK</text>
+
+  <rect class="process" x="755" y="330" width="220" height="105" rx="6"/>
+  <text class="box-title" x="780" y="364">Read alignment</text>
+  <text class="box-text" x="780" y="393">bwa mem</text>
+  <text class="small" x="780" y="420">samtools sort BAM</text>
+
+  <rect class="process" x="755" y="510" width="220" height="105" rx="6"/>
+  <text class="box-title" x="780" y="544">Duplicate removal</text>
+  <text class="box-text" x="780" y="573">GATK MarkDuplicates</text>
+  <text class="small" x="780" y="600">indexed BAM</text>
+
+  <rect class="variant" x="1075" y="235" width="225" height="105" rx="6"/>
+  <text class="box-title" x="1100" y="269">Chromosome-wise</text>
+  <text class="box-title" x="1100" y="297">GVCF calling</text>
+  <text class="box-text" x="1100" y="324">GATK HaplotypeCaller</text>
+
+  <rect class="variant" x="1075" y="410" width="225" height="105" rx="6"/>
+  <text class="box-title" x="1100" y="444">Sample GVCF merge</text>
+  <text class="box-text" x="1100" y="473">GATK CombineGVCFs</text>
+  <text class="small" x="1100" y="500">one GVCF per sample</text>
+
+  <rect class="variant" x="1075" y="585" width="225" height="105" rx="6"/>
+  <text class="box-title" x="1100" y="619">Joint genotyping</text>
+  <text class="box-text" x="1100" y="648">GATK GenotypeGVCFs</text>
+  <text class="small" x="1100" y="675">cohort-level VCF</text>
+
+  <rect class="filter" x="1075" y="760" width="225" height="105" rx="6"/>
+  <text class="box-title" x="1100" y="794">Variant filtering</text>
+  <text class="box-text" x="1100" y="823">SNP/INDEL split</text>
+  <text class="small" x="1100" y="850">configurable PASS VCFs</text>
+
+  <rect class="output" x="1405" y="235" width="230" height="88" rx="6"/>
+  <text class="box-title" x="1430" y="269">Missingness QC</text>
+  <text class="box-text" x="1430" y="298">PLINK + Python plots</text>
+
+  <rect class="output" x="1405" y="365" width="230" height="88" rx="6"/>
+  <text class="box-title" x="1430" y="399">Format conversion</text>
+  <text class="box-text" x="1430" y="428">PLINK, HapMap</text>
+
+  <rect class="optional" x="1405" y="510" width="230" height="88" rx="6"/>
+  <text class="box-title" x="1430" y="544">PCA analysis</text>
+  <text class="box-text" x="1430" y="573">VCF2PCACluster</text>
+
+  <rect class="optional" x="1405" y="640" width="230" height="88" rx="6"/>
+  <text class="box-title" x="1430" y="674">Genetic distance</text>
+  <text class="box-text" x="1430" y="703">VCF2Dis, NJ tree</text>
+
+  <rect class="output" x="1405" y="785" width="230" height="88" rx="6"/>
+  <text class="box-title" x="1430" y="819">Final VCF outputs</text>
+  <text class="box-text" x="1430" y="848">raw, SNP and INDEL VCFs</text>
+
+  <path class="arrow" d="M335 279 H435"/>
+  <path class="arrow" d="M545 308 V345"/>
+  <path class="arrow" d="M655 389 H755"/>
+  <path class="arrow" d="M865 435 V510"/>
+  <path class="arrow" d="M975 562 H1010 V287 H1075"/>
+  <path class="arrow" d="M1188 340 V410"/>
+  <path class="arrow" d="M1188 515 V585"/>
+  <path class="arrow" d="M1188 690 V760"/>
+  <path class="arrow" d="M1300 812 H1405"/>
+  <path class="arrow-light" d="M1300 812 H1355 V279 H1405"/>
+  <path class="arrow-light" d="M1300 812 H1355 V409 H1405"/>
+  <path class="arrow-light" d="M1300 812 H1355 V554 H1405"/>
+  <path class="arrow-light" d="M1300 812 H1355 V684 H1405"/>
+
+  <path class="arrow-light" d="M335 414 H380 V514 H435"/>
+  <path class="arrow-light" d="M545 558 V645 H1010 V637 H1075"/>
+  <path class="arrow-light" d="M655 514 H705 V382 H755"/>
+  <path class="arrow-light" d="M655 514 H1010 V287 H1075"/>
+
+  <text class="small" x="1095" y="220">parallelized by sample and chromosome</text>
+  <text class="small" x="1415" y="758">optional modules controlled in config.yaml</text>
+
+  <rect class="container" x="500" y="1040" width="1070" height="82" rx="6"/>
+  <text class="box-title" x="535" y="1089">Execution layer</text>
+  <text class="box-text" x="780" y="1089">Snakemake DAG scheduling</text>
+  <text class="box-text" x="1110" y="1089">Singularity/Apptainer container</text>
+  <text class="box-text" x="1430" y="1089">config.yaml</text>
+
+  <rect class="input" x="82" y="1045" width="28" height="18" rx="2"/>
+  <text class="small" x="120" y="1060">Input</text>
+  <rect class="process" x="82" y="1078" width="28" height="18" rx="2"/>
+  <text class="small" x="120" y="1093">Processing</text>
+  <rect class="variant" x="82" y="1111" width="28" height="18" rx="2"/>
+  <text class="small" x="120" y="1126">Variant calling</text>
+  <rect class="filter" x="285" y="1045" width="28" height="18" rx="2"/>
+  <text class="small" x="323" y="1060">Filtering</text>
+  <rect class="output" x="285" y="1078" width="28" height="18" rx="2"/>
+  <text class="small" x="323" y="1093">Output</text>
+</svg>

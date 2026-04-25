@@ -1,0 +1,15 @@
+rule haplo:
+    input:
+        bam="duplicate_removed/{sample}.rmdup.bam",
+        bai="duplicate_removed/{sample}.rmdup.bam.bai",
+        ref=config['reference'],
+        idx=config['reference'] + ".fai",
+        dict=reference_dict(config['reference'])
+    output:
+        "gvcf/{sample}.{chrom}.g.vcf.gz"
+    log:
+        "logs/gatk/haplotypecaller/{sample}.{chrom}.log"
+    params:
+        java_options=config['params']['haplotype_caller']['java_options']
+    shell:
+        "gatk {params.java_options} HaplotypeCaller -R {input.ref} -L {wildcards.chrom} --emit-ref-confidence GVCF -I {input.bam} -O {output} > {log} 2>&1"

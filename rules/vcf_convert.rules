@@ -1,0 +1,81 @@
+rule vcf_to_plink_binary:
+    input:
+        vcf=config["params"]["vcf_convert"]["input_vcf"]
+    output:
+        bed=config["params"]["vcf_convert"]["output_prefix"] + ".bed",
+        bim=config["params"]["vcf_convert"]["output_prefix"] + ".bim",
+        fam=config["params"]["vcf_convert"]["output_prefix"] + ".fam",
+        log=config["params"]["vcf_convert"]["output_prefix"] + ".plink_binary.log"
+    params:
+        output_prefix=config["params"]["vcf_convert"]["output_prefix"],
+        extra=config["params"]["vcf_convert"].get("plink_extra", "--allow-extra-chr")
+    log:
+        "logs/vcf_convert/plink_binary.log"
+    shell:
+        """
+        mkdir -p $(dirname {params.output_prefix}) logs/vcf_convert
+
+        plink \
+            --vcf {input.vcf} \
+            {params.extra} \
+            --make-bed \
+            --out {params.output_prefix} \
+            > {log} 2>&1
+
+        mv {params.output_prefix}.log {output.log}
+        """
+
+
+rule vcf_to_plink_text:
+    input:
+        bed=config["params"]["vcf_convert"]["output_prefix"] + ".bed",
+        bim=config["params"]["vcf_convert"]["output_prefix"] + ".bim",
+        fam=config["params"]["vcf_convert"]["output_prefix"] + ".fam"
+    output:
+        ped=config["params"]["vcf_convert"]["output_prefix"] + ".ped",
+        map=config["params"]["vcf_convert"]["output_prefix"] + ".map",
+        log=config["params"]["vcf_convert"]["output_prefix"] + ".plink_text.log"
+    params:
+        output_prefix=config["params"]["vcf_convert"]["output_prefix"],
+        extra=config["params"]["vcf_convert"].get("plink_extra", "--allow-extra-chr")
+    log:
+        "logs/vcf_convert/plink_text.log"
+    shell:
+        """
+        mkdir -p $(dirname {params.output_prefix}) logs/vcf_convert
+
+        plink \
+            --bfile {params.output_prefix} \
+            {params.extra} \
+            --recode \
+            --out {params.output_prefix} \
+            > {log} 2>&1
+
+        mv {params.output_prefix}.log {output.log}
+        """
+
+
+rule vcf_to_hapmap:
+    input:
+        vcf=config["params"]["vcf_convert"]["input_vcf"]
+    output:
+        hmp=config["params"]["vcf_convert"]["output_prefix"] + ".hmp.txt"
+    params:
+        output_prefix=config["params"]["vcf_convert"]["output_prefix"],
+        tassel=config["params"]["vcf_convert"].get("tassel_executable", "run_pipeline.pl"),
+        memory=config["params"]["vcf_convert"].get("tassel_memory", "-Xmx10g"),
+        extra=config["params"]["vcf_convert"].get("tassel_extra", "")
+    log:
+        "logs/vcf_convert/hapmap.log"
+    shell:
+        """
+        mkdir -p $(dirname {params.output_prefix}) logs/vcf_convert
+
+        {params.tassel} \
+            {params.memory} \
+            -importGuess {input.vcf} \
+            {params.extra} \
+            -export {params.output_prefix} \
+            -exportType Hapmap \
+            > {log} 2>&1
+        """

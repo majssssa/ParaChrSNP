@@ -1,0 +1,13 @@
+rule combine_gvcf:
+    input:
+        gvcf=expand("gvcf/{sample}.g.vcf.gz", sample=config['samples']),
+        fa=config['reference']
+    output:
+        "combined.g.vcf.gz"
+    log:
+        "logs/gatk/combine_gvcf.log"
+    params:
+        java_options=config['params']['combine_vcf']['java_options'],
+        variants=lambda wildcards, input: " ".join(f"--variant {vcf}" for vcf in input.gvcf)
+    shell:
+        "gatk CombineGVCFs {params.java_options} -R {input.fa} {params.variants} -O {output} > {log} 2>&1"

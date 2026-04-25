@@ -1,0 +1,94 @@
+__default__:
+  account: user186
+  partition: pNormal
+  n: 1
+  c: 1
+  mempercpu: 2G
+
+qc:
+  c: 8
+  mempercpu: 2G
+
+clean_reads:
+  c: 16
+  mempercpu: 2G
+
+bwa_index:
+  c: 2
+  mempercpu: 4G
+
+faidx_index:
+  c: 1
+  mempercpu: 1G
+
+bwa_mem:
+  c: 16
+  mempercpu: 2G
+
+samtools_index:
+  c: 1
+  mempercpu: 2G
+
+picard_index:
+  c: 1
+  mempercpu: 4G
+
+bam_rmdup:
+  c: 2
+  mempercpu: 5G
+
+index_rmdup:
+  c: 1
+  mempercpu: 2G
+
+haplo:
+  c: 5
+  mempercpu: 2G
+
+combine_gvcf:
+  c: 2
+  mempercpu: 2G
+
+joint_calling:
+  c: 2
+  mempercpu: 2G
+
+snp_select:
+  c: 2
+  mempercpu: 2G
+
+indel_select:
+  c: 2
+  mempercpu: 2G
+
+snp_filter:
+  c: 2
+  mempercpu: 2G
+
+indel_filter:
+  c: 2
+  mempercpu: 2G
+
+vcf_missing:
+  c: 1
+  mempercpu: 2G
+
+vcf_to_plink_binary:
+  c: 1
+  mempercpu: 2G
+
+vcf_to_plink_text:
+  c: 1
+  mempercpu: 2G
+
+vcf_to_hapmap:
+  c: 2
+  mempercpu: 6G
+
+vcf2pca:
+  c: 16
+  mempercpu: 2G
+
+vcf2dis:
+  c: 4
+  mempercpu: 2G

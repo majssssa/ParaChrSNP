@@ -1,0 +1,19 @@
+#rule merge_sample_gvcf:
+#    input:
+#        gvcfs="gvcf/{sample}.{chrom}.g.vcf.gz", chrom=config["chromosomes"]
+#    output:
+#        "gvcf/{sample}.g.vcf.gz"
+#    shell:
+#        """
+#        gatk GatherVcfs -I {input.gvcfs} -O {output}
+#        """
+
+rule merge_sample_gvcf:
+    input:
+        "gvcf/{sample}.list"
+    output:
+        "gvcf/{sample}.g.vcf.gz"
+    log:
+        "logs/gatk/merge_sample_gvcf/{sample}.log"
+    shell:
+        "gatk MergeVcfs -I {input} -O {output} > {log} 2>&1"

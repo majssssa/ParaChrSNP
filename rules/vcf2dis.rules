@@ -1,0 +1,26 @@
+rule vcf2dis:
+    input:
+        vcf="result_vcfs/combined.snp.filtered.vcf.gz",
+        sample_group=lambda wildcards: [config["params"]["vcf2dis"].get("sample_group")] if config["params"]["vcf2dis"].get("sample_group") else []
+    output:
+        matrix=config["params"]["vcf2dis"]["output_matrix"],
+        tree=config["params"]["vcf2dis"]["output_tree"]
+    params:
+        executable=config["params"]["vcf2dis"]["executable"],
+        tree_method=config["params"]["vcf2dis"].get("tree_method", 1),
+        extra=config["params"]["vcf2dis"].get("extra", ""),
+        sample_group_arg=lambda wildcards, input: f"-InSampleGroup {input.sample_group}" if input.sample_group else ""
+    log:
+        "logs/vcf2dis/vcf2dis.log"
+    shell:
+        """
+        mkdir -p $(dirname {output.matrix})
+
+        {params.executable} \
+            -InPut {input.vcf} \
+            -OutPut {output.matrix} \
+            {params.sample_group_arg} \
+            -TreeMethod {params.tree_method} \
+            {params.extra} \
+            > {log} 2>&1
+        """

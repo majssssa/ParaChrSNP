@@ -1,0 +1,33 @@
+rule vcf_missing:
+    input:
+        vcf="result_vcfs/combined.snp.filtered.vcf.gz",
+        plot_script=config["params"]["vcf_missing"]["plot_script"]
+    output:
+        lmiss=config["params"]["vcf_missing"]["output_prefix"] + ".lmiss",
+        imiss=config["params"]["vcf_missing"]["output_prefix"] + ".imiss",
+        plink_log=config["params"]["vcf_missing"]["output_prefix"] + ".log",
+        sample_pdf=config["params"]["vcf_missing"]["plot_prefix"] + ".sample_missing.pdf",
+        variant_pdf=config["params"]["vcf_missing"]["plot_prefix"] + ".Variant_missing.pdf"
+    params:
+        output_prefix=config["params"]["vcf_missing"]["output_prefix"],
+        plot_prefix=config["params"]["vcf_missing"]["plot_prefix"],
+        extra=config["params"]["vcf_missing"].get("extra", "--allow-extra-chr")
+    log:
+        "logs/vcf_missing/vcf_missing.log"
+    shell:
+        """
+        mkdir -p $(dirname {params.output_prefix}) logs/vcf_missing
+
+        plink \
+            --vcf {input.vcf} \
+            {params.extra} \
+            --missing \
+            --out {params.output_prefix} \
+            > {log} 2>&1
+
+        python3 {input.plot_script} \
+            {output.lmiss} \
+            {output.imiss} \
+            {params.plot_prefix} \
+            >> {log} 2>&1
+        """

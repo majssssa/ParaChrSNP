@@ -16,36 +16,22 @@ AGENTS.md
 *.sqsh
 
 # Raw sequencing data
-raw_fastq/*
-!raw_fastq/.gitkeep
+raw_fastq/
 
 # Reference genomes and indexes
-reference/*
-!reference/.gitkeep
-!reference/README.md
+reference/
 
 # Workflow outputs
-qc/*
-clean_reads/*
-sorted_reads/*
-duplicate_removed/*
-gvcf/*
-result_vcfs/*
-missing/*
-format_convert/*
-pca/*
-dis/*
-
-!qc/.gitkeep
-!clean_reads/.gitkeep
-!sorted_reads/.gitkeep
-!duplicate_removed/.gitkeep
-!gvcf/.gitkeep
-!result_vcfs/.gitkeep
-!missing/.gitkeep
-!format_convert/.gitkeep
-!pca/.gitkeep
-!dis/.gitkeep
+qc/
+clean_reads/
+sorted_reads/
+duplicate_removed/
+gvcf/
+result_vcfs/
+missing/
+format_convert/
+pca/
+dis/
 
 # Logs and benchmark files
 logs/

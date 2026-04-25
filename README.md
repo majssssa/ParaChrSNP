@@ -23,7 +23,7 @@ cd ParaChrSNP
 下载容器镜像
 
 ```bash
-singularity pull ParaChrSNP.sif "FIGSHARE_DIRECT_DOWNLOAD_URL"
+singularity pull ParaChrSNP.sif http://www.majunpeng.com/ParaChrSNP/ParaChrSNP.sif
 
 # singularity pull: 从远程地址下载 Singularity 镜像。
 # ParaChrSNP.sif: 下载后保存到项目根目录的容器文件名。

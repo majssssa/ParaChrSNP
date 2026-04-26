@@ -1,59 +1,128 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
-  <title id="title">ParaChrSNP icon</title>
-  <desc id="desc">A publication-style icon combining a DNA helix, chromosome-wise segmentation and highlighted SNP loci for the ParaChrSNP workflow.</desc>
-  <defs>
-    <linearGradient id="bg" x1="160" y1="110" x2="840" y2="900" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#f8fafc"/>
-      <stop offset="1" stop-color="#e0f2fe"/>
-    </linearGradient>
-    <linearGradient id="helixA" x1="300" y1="165" x2="720" y2="860" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#0284c7"/>
-      <stop offset="1" stop-color="#16a34a"/>
-    </linearGradient>
-    <linearGradient id="helixB" x1="720" y1="165" x2="300" y2="860" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#16a34a"/>
-      <stop offset="1" stop-color="#0284c7"/>
-    </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#0f172a" flood-opacity="0.16"/>
-    </filter>
-  </defs>
-
-  <rect x="74" y="74" width="876" height="876" rx="190" fill="url(#bg)" stroke="#cbd5e1" stroke-width="22"/>
-
-  <g filter="url(#shadow)">
-    <rect x="176" y="166" width="672" height="692" rx="80" fill="#ffffff" stroke="#dbe4ee" stroke-width="8"/>
-  </g>
-
-  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M368 190 C690 312 690 435 368 557 C235 608 235 740 368 834" stroke="url(#helixA)" stroke-width="34"/>
-    <path d="M656 190 C334 312 334 435 656 557 C789 608 789 740 656 834" stroke="url(#helixB)" stroke-width="34"/>
-  </g>
-
-  <g stroke="#64748b" stroke-width="18" stroke-linecap="round">
-    <line x1="385" y1="255" x2="639" y2="255"/>
-    <line x1="336" y1="340" x2="688" y2="340"/>
-    <line x1="337" y1="450" x2="687" y2="450"/>
-    <line x1="385" y1="536" x2="639" y2="536"/>
-    <line x1="345" y1="642" x2="679" y2="642"/>
-    <line x1="360" y1="748" x2="664" y2="748"/>
-  </g>
-
-  <g>
-    <circle cx="688" cy="340" r="42" fill="#ffedd5" stroke="#ea580c" stroke-width="12"/>
-    <circle cx="337" cy="450" r="42" fill="#fae8ff" stroke="#a21caf" stroke-width="12"/>
-    <circle cx="664" cy="748" r="42" fill="#fef9c3" stroke="#ca8a04" stroke-width="12"/>
-  </g>
-
-  <g font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">
-    <text x="688" y="352" font-size="32" fill="#9a3412">A/T</text>
-    <text x="337" y="462" font-size="32" fill="#86198f">C/G</text>
-    <text x="664" y="760" font-size="32" fill="#854d0e">G/A</text>
-  </g>
-
-  <g>
-    <rect x="252" y="862" width="520" height="72" rx="36" fill="#17212b"/>
-    <text x="512" y="912" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="700" text-anchor="middle" fill="#ffffff">ParaChrSNP</text>
-  </g>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 25.4.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="图层_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 1400 720" style="enable-background:new 0 0 1400 720;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:url(#SVGID_1_);stroke:#CBD5E1;stroke-width:16;}
+	.st1{opacity:0.92;}
+	
+		.st2{fill:none;stroke:url(#SVGID_00000072247529798519538590000016492719033378910645_);stroke-width:18;stroke-linecap:round;stroke-linejoin:round;}
+	
+		.st3{fill:none;stroke:url(#SVGID_00000079478811281415609970000000517532331969018015_);stroke-width:18;stroke-linecap:round;stroke-linejoin:round;}
+	
+		.st4{fill:none;stroke:url(#SVGID_00000102508036631301550790000009779654609272588931_);stroke-width:18;stroke-linecap:round;stroke-linejoin:round;}
+	
+		.st5{fill:none;stroke:url(#SVGID_00000057111217165799656320000015820479346732103568_);stroke-width:18;stroke-linecap:round;stroke-linejoin:round;}
+	.st6{opacity:0.96;}
+	.st7{fill:none;stroke:#16A34A;stroke-width:22;stroke-linecap:round;stroke-linejoin:round;}
+	.st8{fill:none;stroke:#16A34A;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;}
+	.st9{fill:none;stroke:#0284C7;stroke-width:22;stroke-linecap:round;stroke-linejoin:round;}
+	.st10{fill:none;stroke:#0284C7;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;}
+	.st11{fill:none;stroke:#EA580C;stroke-width:22;stroke-linecap:round;stroke-linejoin:round;}
+	.st12{fill:none;stroke:#EA580C;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;}
+	.st13{fill:none;stroke:#A21CAF;stroke-width:22;stroke-linecap:round;stroke-linejoin:round;}
+	.st14{fill:none;stroke:#A21CAF;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;}
+	.st15{fill:none;stroke:#CA8A04;stroke-width:22;stroke-linecap:round;stroke-linejoin:round;}
+	.st16{fill:none;stroke:#CA8A04;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;}
+	.st17{fill:#FFEDD5;stroke:#EA580C;stroke-width:8;}
+	.st18{fill:#FAE8FF;stroke:#A21CAF;stroke-width:8;}
+	.st19{fill:#FEF9C3;stroke:#CA8A04;stroke-width:8;}
+	.st20{fill:#9A3412;}
+	.st21{font-family:'Arial-BoldMT';}
+	.st22{font-size:34.0633px;}
+	.st23{fill:#86198F;}
+	.st24{font-size:31.9853px;}
+	.st25{fill:#854D0E;}
+	.st26{font-size:35.2349px;}
+	.st27{fill:none;stroke:#16A34A;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;}
+	.st28{font-family:'ArialMT';}
+	.st29{font-size:150px;}
+	.st30{fill:none;stroke:#0284C7;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;}
+	.st31{fill:none;stroke:#CA8A04;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;}
+	.st32{fill:#17212B;}
+</style>
+<desc  id="desc">A publication-style ParaChrSNP wordmark with stylized chromosomes, DNA helix and SNP loci.</desc>
+<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="80" y1="438" x2="1320" y2="998" gradientTransform="matrix(1 0 0 1 0 -358)">
+	<stop  offset="0" style="stop-color:#FFFFFF"/>
+	<stop  offset="1" style="stop-color:#E0F2FE"/>
+</linearGradient>
+<path class="st0" d="M142,48h1116c53,0,96,43,96,96v432c0,53-43,96-96,96H142c-53,0-96-43-96-96V144C46,91,89,48,142,48z"/>
+<g class="st1">
+	
+		<linearGradient id="SVGID_00000009557509060023055400000018413362358973595807_" gradientUnits="userSpaceOnUse" x1="293.9963" y1="475.6951" x2="1098.9963" y2="859.6951" gradientTransform="matrix(1 0 0 1 0 -358)">
+		<stop  offset="0" style="stop-color:#0284C7"/>
+		<stop  offset="1" style="stop-color:#16A34A"/>
+	</linearGradient>
+	
+		<path style="fill:none;stroke:url(#SVGID_00000009557509060023055400000018413362358973595807_);stroke-width:18;stroke-linecap:round;stroke-linejoin:round;" d="
+		M265,210c190-72,255-72,445,0"/>
+	
+		<linearGradient id="SVGID_00000022557551113307995470000015535321813148635034_" gradientUnits="userSpaceOnUse" x1="1061.1989" y1="497.0679" x2="256.1989" y2="881.0679" gradientTransform="matrix(1 0 0 1 0 -358)">
+		<stop  offset="0" style="stop-color:#16A34A"/>
+		<stop  offset="1" style="stop-color:#0284C7"/>
+	</linearGradient>
+	
+		<path style="fill:none;stroke:url(#SVGID_00000022557551113307995470000015535321813148635034_);stroke-width:18;stroke-linecap:round;stroke-linejoin:round;" d="
+		M690,210c190-72,255-72,445,0"/>
+	
+		<linearGradient id="SVGID_00000005975602816358861190000008318076714335669425_" gradientUnits="userSpaceOnUse" x1="1098.9963" y1="576.3048" x2="293.9964" y2="960.3048" gradientTransform="matrix(1 0 0 1 0 -358)">
+		<stop  offset="0" style="stop-color:#16A34A"/>
+		<stop  offset="1" style="stop-color:#0284C7"/>
+	</linearGradient>
+	
+		<path style="fill:none;stroke:url(#SVGID_00000005975602816358861190000008318076714335669425_);stroke-width:18;stroke-linecap:round;stroke-linejoin:round;" d="
+		M265,510c190,72,255,72,445,0"/>
+	
+		<linearGradient id="SVGID_00000057857406502285524810000005697489911165519522_" gradientUnits="userSpaceOnUse" x1="256.1989" y1="554.9321" x2="1061.1989" y2="938.9321" gradientTransform="matrix(1 0 0 1 0 -358)">
+		<stop  offset="0" style="stop-color:#0284C7"/>
+		<stop  offset="1" style="stop-color:#16A34A"/>
+	</linearGradient>
+	
+		<path style="fill:none;stroke:url(#SVGID_00000057857406502285524810000005697489911165519522_);stroke-width:18;stroke-linecap:round;stroke-linejoin:round;" d="
+		M690,510c190,72,255,72,445,0"/>
+</g>
+<g class="st6">
+	<g transform="translate(190 178) rotate(-18)">
+		<path class="st7" d="M-79.7-85.6c15.9,27.1,19.1,59,3.2,98.8"/>
+		<path class="st7" d="M-19.2-85.6c-15.9,27.1-19.1,59-3.2,98.8"/>
+		<line class="st8" x1="-67" y1="-37.8" x2="-31.9" y2="-37.8"/>
+	</g>
+	<g transform="translate(300 150) rotate(18)">
+		<path class="st9" d="M-109.5-34.1c15.9,27.1,19.1,54.2,3.2,92.4"/>
+		<path class="st9" d="M-52.1-34.1C-68-7-71.2,20.1-55.3,58.3"/>
+		<line class="st10" x1="-96.7" y1="11.3" x2="-64.8" y2="11.3"/>
+	</g>
+	<g transform="translate(1110 150) rotate(-18)">
+		<path class="st11" d="M46.7-34.1C64.1-4.5,67.6,25.1,50.2,66.9"/>
+		<path class="st11" d="M109.4-34.1C92-4.5,88.5,25.1,105.9,66.9"/>
+		<line class="st12" x1="60.6" y1="15.5" x2="95.5" y2="15.5"/>
+	</g>
+	<g transform="translate(1210 195) rotate(20)">
+		<path class="st13" d="M24.4-90.2c17.4,29.6,20.9,64.5,3.5,108.1"/>
+		<path class="st13" d="M90.7-90.2C73.2-60.6,69.7-25.7,87.2,17.9"/>
+		<line class="st14" x1="38.4" y1="-37.9" x2="76.7" y2="-37.9"/>
+	</g>
+	<g transform="translate(170 510) rotate(70)">
+		<path class="st15" d="M-34-56c19,34,23,66,4,112"/>
+		<path class="st15" d="M34-56C15-22,11,10,30,56"/>
+		<line class="st16" x1="-18" y1="0" x2="18" y2="0"/>
+	</g>
+	<g transform="translate(1230 510) rotate(-70)">
+		<path class="st7" d="M-34-56c19,34,23,66,4,112"/>
+		<path class="st7" d="M34-56C15-22,11,10,30,56"/>
+		<line class="st8" x1="-18" y1="0" x2="18" y2="0"/>
+	</g>
+</g>
+<g>
+	<circle class="st17" cx="439.7" cy="241.6" r="46.3"/>
+	<circle class="st18" cx="821.5" cy="184.5" r="43.5"/>
+	<circle class="st19" cx="1009.9" cy="473.9" r="47.9"/>
+	<text transform="matrix(1 0 0 1 412.2394 256.6206)" class="st20 st21 st22">A/T</text>
+	<text transform="matrix(1 0 0 1 793.0684 198.5742)" class="st23 st21 st24">C/G</text>
+	<text transform="matrix(1 0 0 1 978.5996 489.4229)" class="st25 st21 st26">G/A</text>
+</g>
+<text transform="matrix(1 0 0 1 828.1724 392)" class="st27 st28 st29">S</text>
+<text transform="matrix(1 0 0 1 928.2723 392)" class="st30 st28 st29">N</text>
+<text transform="matrix(1 0 0 1 1036.5724 392)" class="st31 st28 st29">P</text>
+<text transform="matrix(1 0 0 1 269.6722 392)" class="st32 st28 st29">ParaChr</text>
 </svg>

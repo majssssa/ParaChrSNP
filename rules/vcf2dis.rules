@@ -9,12 +9,19 @@ rule vcf2dis:
         executable=config["params"]["vcf2dis"]["executable"],
         tree_method=config["params"]["vcf2dis"].get("tree_method", 1),
         extra=config["params"]["vcf2dis"].get("extra", ""),
+        sample_count=len(config["samples"]),
         sample_group_arg=lambda wildcards, input: f"-InSampleGroup {input.sample_group}" if input.sample_group else ""
     log:
         "logs/vcf2dis/vcf2dis.log"
     shell:
         """
         mkdir -p $(dirname {output.matrix})
+
+        if [ {params.sample_count} -lt 3 ]; then
+            echo "VCF2Dis requires at least 3 samples to build a distance tree, but config.yaml contains {params.sample_count} sample(s)." > {log}
+            echo "Set params.vcf2dis.enabled: false for small test datasets, or provide at least 3 samples." >> {log}
+            exit 1
+        fi
 
         {params.executable} \
             -InPut {input.vcf} \

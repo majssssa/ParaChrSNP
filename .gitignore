@@ -1,0 +1,89 @@
+# Snakemake runtime files
+.snakemake/
+.snakemake_timestamp
+
+# Local assistant/editor metadata
+.codex
+AGENTS.md
+.DS_Store
+.cache/
+readme.html
+*.swp
+*.swo
+
+# Singularity/Apptainer images and temporary build files
+*.sif
+*.simg
+*.sandbox/
+*.sqsh
+
+# Raw sequencing data
+raw_fastq/
+
+# Reference genomes and indexes
+reference/
+
+# Workflow outputs
+qc/
+clean_reads/
+sorted_reads/
+duplicate_removed/
+gvcf/
+result_vcfs/
+missing/
+format_convert/
+pca/
+dis/
+
+# Logs and benchmark files
+logs/
+*.log
+*.err
+*.out
+slurm-*.out
+
+# Large bioinformatics file types
+*.fq
+*.fastq
+*.fq.gz
+*.fastq.gz
+*.fa
+*.fasta
+*.fna
+*.fa.gz
+*.fasta.gz
+*.bam
+*.sam
+*.cram
+*.bai
+*.crai
+*.vcf
+*.vcf.gz
+*.bcf
+*.g.vcf.gz
+*.tbi
+*.csi
+*.bed
+*.bim
+*.fam
+*.ped
+*.map
+*.hmp.txt
+
+# Reference index side files
+*.amb
+*.ann
+*.bwt
+*.pac
+*.sa
+*.fai
+*.dict
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# R session files
+.Rhistory
+.RData
+.Rproj.user/

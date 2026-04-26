@@ -18,7 +18,7 @@ if config["params"]["vcf2pca"].get("enabled", True):
         config["params"]["vcf2pca"]["output_prefix"] + ".eigenval",
     ])
 
-if config["params"]["vcf2dis"].get("enabled", True):
+if config["params"]["vcf2dis"].get("enabled", True) and len(config["samples"]) >= 3:
     OPTIONAL_TARGETS.extend([
         config["params"]["vcf2dis"]["output_matrix"],
         config["params"]["vcf2dis"]["output_tree"],

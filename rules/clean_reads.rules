@@ -1,5 +1,6 @@
 rule clean_reads:
     input:
+        precheck=ancient("reports/precheck.done"),
         fq1=lambda wildcards: config["samples"][wildcards.sample] + ".1.fq.gz",
         fq2=lambda wildcards: config["samples"][wildcards.sample] + ".2.fq.gz"
     output:

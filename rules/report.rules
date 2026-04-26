@@ -1,0 +1,32 @@
+rule report:
+    input:
+        precheck="reports/precheck.done",
+        qc="qc/rastqc.done",
+        fastp=expand("clean_reads/{sample}.json", sample=config["samples"]),
+        rmdup=expand("duplicate_removed/{sample}.dup.txt", sample=config["samples"]),
+        raw_vcf="result_vcfs/combined.vcf.gz",
+        snp_vcf="result_vcfs/combined.snp.filtered.vcf.gz",
+        indel_vcf="result_vcfs/combined.indel.filtered.vcf.gz",
+        missing_sample=config["params"]["vcf_missing"]["plot_prefix"] + ".sample_missing.pdf",
+        missing_variant=config["params"]["vcf_missing"]["plot_prefix"] + ".Variant_missing.pdf",
+        plink_bed=config["params"]["vcf_convert"]["output_prefix"] + ".bed",
+        plink_bim=config["params"]["vcf_convert"]["output_prefix"] + ".bim",
+        plink_fam=config["params"]["vcf_convert"]["output_prefix"] + ".fam",
+        plink_ped=config["params"]["vcf_convert"]["output_prefix"] + ".ped",
+        plink_map=config["params"]["vcf_convert"]["output_prefix"] + ".map",
+        hapmap=config["params"]["vcf_convert"]["output_prefix"] + ".hmp.txt",
+        optional=lambda wildcards: OPTIONAL_TARGETS
+    output:
+        html="reports/ParaChrSNP_report.html",
+        tsv="reports/ParaChrSNP_summary.tsv"
+    log:
+        "logs/report/report.log"
+    shell:
+        """
+        mkdir -p reports logs/report
+        python3 scripts/parachrsnp-report.py \
+            --config config.yaml \
+            --out-html {output.html} \
+            --out-tsv {output.tsv} \
+            > {log} 2>&1
+        """

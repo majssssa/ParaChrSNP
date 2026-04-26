@@ -1,6 +1,7 @@
 rule bwa_index:
     input:
-        config['reference']
+        ref=config['reference'],
+        precheck=ancient("reports/precheck.done")
     output:
         amb=config['reference'] + ".amb",
         ann=config['reference'] + ".ann",
@@ -10,4 +11,4 @@ rule bwa_index:
     log:
         "logs/index/bwa_index.log"
     shell:
-        "bwa index {input} 2> {log}"
+        "bwa index {input.ref} 2> {log}"

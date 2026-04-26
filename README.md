@@ -17,7 +17,7 @@
 下载 ParaChrSNP 项目代码。
 
 ```bash
-git clone https://github.com/your_name/ParaChrSNP.git
+git clone https://github.com/majssssa/ParaChrSNP.git
 cd ParaChrSNP
 
 # git clone: 从 GitHub 下载 ParaChrSNP 项目代码。
@@ -54,6 +54,23 @@ raw_fastq/{sample}.2.fq.gz
 - `params.vcf2dis.enabled`: 是否在完整流程中运行遗传距离和系统发育树分析，`true` 表示运行，`false` 表示不运行。VCF2Dis 构建系统发育树至少需要 3 个样本；如果 `samples` 少于 3 个，完整流程会自动跳过该模块。
 - `params.vcf2pca.sample_group`: 可选的 PCA 样本分组文件。留空或删除该参数时，不传入 `-InSampleGroup`。
 - `params.vcf2dis.sample_group`: 可选的遗传距离样本分组文件。留空或删除该参数时，不传入 `-InSampleGroup`。
+
+## 运行前检查
+
+ParaChrSNP 在完整流程开始前会自动运行 `precheck`，用于检查 `config.yaml`、参考基因组、FASTQ 文件、染色体名称、可选分组文件和容器镜像是否可用。如果存在严重错误，流程会在正式计算前停止，避免运行到中后期才因为输入问题失败。
+
+单独运行运行前检查。
+
+```bash
+snakemake --snakefile Snakefile --configfile config.yaml --cores 1 --use-singularity reports/precheck.done
+
+# snakemake: 运行 Snakemake 工作流。
+# --snakefile Snakefile: 指定流程入口文件。
+# --configfile config.yaml: 指定流程配置文件。
+# --cores 1: 运行该检查任务时使用 1 个 CPU 核心即可。
+# --use-singularity: 在 ParaChrSNP.sif 容器中执行检查脚本。
+# reports/precheck.done: 指定只生成 precheck 完成标记；同时会生成 reports/precheck.tsv 和 reports/precheck.html。
+```
 
 ## 运行流程
 
@@ -119,6 +136,9 @@ snakemake --snakefile Snakefile --configfile config.yaml --cores 12 --use-singul
 - `pca/ParaChrSNP.eigenval`: VCF2PCACluster 输出的 PCA 特征值。
 - `dis/ParaChrSNP.p_dis.mat`: VCF2Dis 输出的样本遗传距离矩阵。
 - `dis/ParaChrSNP.p_dis.nwk`: VCF2Dis 输出的 Newick 格式系统发育树。
+- `reports/precheck.html`: 运行前检查报告。
+- `reports/ParaChrSNP_report.html`: 流程汇总 HTML 报告，包含样本数、染色体数、质控、清洗、去重复、变异数量、缺失率和下游输出文件概览。
+- `reports/ParaChrSNP_summary.tsv`: 流程核心统计指标表格，方便继续整理或作图。
 
 
 ## 联系方式

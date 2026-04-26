@@ -31,6 +31,7 @@ wildcard_constraints:
 
 rule all:
     input:
+        "reports/precheck.done",
         "qc/rastqc.done",
         expand("gvcf/{sample}.{chrom}.g.vcf.gz", sample=config["samples"], chrom=config["chromosomes"]),
         expand("gvcf/{sample}.g.vcf.gz", sample=config["samples"]),
@@ -45,8 +46,11 @@ rule all:
         config["params"]["vcf_convert"]["output_prefix"] + ".ped",
         config["params"]["vcf_convert"]["output_prefix"] + ".map",
         config["params"]["vcf_convert"]["output_prefix"] + ".hmp.txt",
-        OPTIONAL_TARGETS
+        OPTIONAL_TARGETS,
+        "reports/ParaChrSNP_report.html",
+        "reports/ParaChrSNP_summary.tsv"
 
+include: "rules/precheck.rules"
 include: "rules/bam_rmdup.rules"
 include: "rules/bwa_index.rules"
 include: "rules/bwa_mem.rules"
@@ -69,3 +73,4 @@ include: "rules/vcf_missing.rules"
 include: "rules/vcf_convert.rules"
 include: "rules/vcf2pca.rules"
 include: "rules/vcf2dis.rules"
+include: "rules/report.rules"

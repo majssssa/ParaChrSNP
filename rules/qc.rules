@@ -1,6 +1,7 @@
 rule qc:
     input:
-        expand("{prefix}.{read}.fq.gz", prefix=list(config["samples"].values()), read=[1, 2])
+        precheck=ancient("reports/precheck.done"),
+        fastqs=expand("{prefix}.{read}.fq.gz", prefix=list(config["samples"].values()), read=[1, 2])
     output:
         done="qc/rastqc.done"
     params:
@@ -14,7 +15,7 @@ rule qc:
         """
         mkdir -p {params.outdir} logs/qc
         rm -f {output.done}
-        rastqc {params.extra} -t {threads} -o {params.outdir} {input} > {log} 2>&1
+        rastqc {params.extra} -t {threads} -o {params.outdir} {input.fastqs} > {log} 2>&1
 
         if grep -q "^Error processing" {log}; then
             echo "RastQC reported input processing errors. Check {log}." >> {log}

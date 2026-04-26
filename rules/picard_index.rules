@@ -1,9 +1,10 @@
 rule picard_index:
     input:
-        config['reference']
+        ref=config['reference'],
+        precheck=ancient("reports/precheck.done")
     output:
         reference_dict(config['reference'])
     log:
         "logs/index/picard_index.log"
     shell:
-        "gatk CreateSequenceDictionary -R {input} -O {output} > {log} 2>&1"
+        "gatk CreateSequenceDictionary -R {input.ref} -O {output} > {log} 2>&1"

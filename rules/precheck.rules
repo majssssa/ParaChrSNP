@@ -1,0 +1,19 @@
+rule precheck:
+    input:
+        config="config.yaml"
+    output:
+        done="reports/precheck.done",
+        tsv="reports/precheck.tsv",
+        html="reports/precheck.html"
+    log:
+        "logs/precheck/precheck.log"
+    shell:
+        """
+        mkdir -p reports logs/precheck
+        python3 scripts/precheck.py \
+            --config {input.config} \
+            --out-tsv {output.tsv} \
+            --out-html {output.html} \
+            --done {output.done} \
+            > {log} 2>&1
+        """

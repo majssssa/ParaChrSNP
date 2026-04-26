@@ -1,9 +1,10 @@
 rule faidx_index:
     input:
-        config['reference']
+        ref=config['reference'],
+        precheck=ancient("reports/precheck.done")
     output:
         config['reference'] + ".fai"
     log:
         "logs/index/faidx_index.log"
     shell:
-        "samtools faidx {input} > {log} 2>&1"
+        "samtools faidx {input.ref} > {log} 2>&1"

@@ -12,7 +12,7 @@ CHROM_PATTERN = "|".join(re.escape(chrom) for chrom in config["chromosomes"])
 
 OPTIONAL_TARGETS = []
 
-if config["params"]["vcf2pca"].get("enabled", True):
+if config["params"]["vcf2pca"].get("enabled", True) and len(config["samples"]) >= 3:
     OPTIONAL_TARGETS.extend([
         config["params"]["vcf2pca"]["output_prefix"] + ".eigenvec",
         config["params"]["vcf2pca"]["output_prefix"] + ".eigenval",

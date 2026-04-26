@@ -46,7 +46,7 @@ raw_fastq/{sample}.2.fq.gz
 - `samples`: 样本名和 FASTQ 文件前缀。
 - `chromosomes`: 需要逐条染色体 calling 的染色体名称，必须和参考基因组 FASTA 中的序列 ID 一致。
 - `params.snp_filter` 和 `params.indel_filter`: SNP/INDEL 过滤参数。
-- `params.vcf2pca.enabled`: 是否在完整流程中运行 PCA 分析，`true` 表示运行，`false` 表示不运行。
+- `params.vcf2pca.enabled`: 是否在完整流程中运行 PCA 分析，`true` 表示运行，`false` 表示不运行。VCF2PCACluster 至少需要 3 个样本；如果 `samples` 少于 3 个，完整流程会自动跳过该模块。
 - `params.vcf2dis.enabled`: 是否在完整流程中运行遗传距离和系统发育树分析，`true` 表示运行，`false` 表示不运行。VCF2Dis 构建系统发育树至少需要 3 个样本；如果 `samples` 少于 3 个，完整流程会自动跳过该模块。
 - `params.vcf2pca.sample_group`: 可选的 PCA 样本分组文件。留空或删除该参数时，不传入 `-InSampleGroup`。
 - `params.vcf2dis.sample_group`: 可选的遗传距离样本分组文件。留空或删除该参数时，不传入 `-InSampleGroup`。

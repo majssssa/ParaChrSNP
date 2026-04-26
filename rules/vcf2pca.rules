@@ -9,6 +9,7 @@ rule vcf2pca:
         executable=config["params"]["vcf2pca"]["executable"],
         output_prefix=config["params"]["vcf2pca"]["output_prefix"],
         extra=config["params"]["vcf2pca"].get("extra", ""),
+        sample_count=len(config["samples"]),
         sample_group_arg=lambda wildcards, input: f"-InSampleGroup {input.sample_group}" if input.sample_group else ""
     threads:
         config["params"]["vcf2pca"]["threads"]
@@ -17,6 +18,12 @@ rule vcf2pca:
     shell:
         """
         mkdir -p $(dirname {params.output_prefix})
+
+        if [ {params.sample_count} -lt 3 ]; then
+            echo "VCF2PCACluster requires at least 3 samples, but config.yaml contains {params.sample_count} sample(s)." > {log}
+            echo "Set params.vcf2pca.enabled: false for small test datasets, or provide at least 3 samples." >> {log}
+            exit 1
+        fi
 
         {params.executable} \
             -InVCF {input.vcf} \

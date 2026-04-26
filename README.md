@@ -1,7 +1,7 @@
 # ParaChrSNP
 
 <p align="center">
-  <img src="figures/ParaChrSNP.png" alt="ParaChrSNP icon" width="180">
+  <img src="figures/ParaChrSNP_icon_512.png" alt="ParaChrSNP icon" width="180">
 </p>
 
 `ParaChrSNP` 是一个按染色体并行进行 SNP calling 的 Snakemake 流程。流程从双端 FASTQ 开始，依次完成原始数据质控、`fastp` 清洗、`bwa mem | samtools sort` 比对、GATK 按染色体 calling、GVCF 合并、联合分型、SNP/INDEL 过滤、VCF 缺失率统计、常用格式转换、PCA 和遗传距离/系统发育树分析。

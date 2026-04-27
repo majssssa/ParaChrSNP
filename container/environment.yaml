@@ -15,6 +15,7 @@ dependencies:
   - fastp
   - plink
   - tassel
+  - beagle
   - snpeff
   - imagemagick
   - librsvg

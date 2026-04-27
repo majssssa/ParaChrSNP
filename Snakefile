@@ -28,6 +28,25 @@ SNPEFF_CONFIG.setdefault("database_done", "annotation/snpeff_db.done")
 SNPEFF_CONFIG.setdefault("java_options", "-Xmx8g")
 SNPEFF_CONFIG.setdefault("extra", "")
 
+IMPUTATION_CONFIG = config["params"].setdefault("imputation", {})
+IMPUTATION_CONFIG.setdefault("enabled", False)
+IMPUTATION_CONFIG.setdefault("input_vcf", "result_vcfs/combined.snp.filtered.vcf.gz")
+IMPUTATION_CONFIG.setdefault("output_prefix", "imputation/combined.snp.filtered.beagle")
+IMPUTATION_CONFIG.setdefault("jar", "")
+IMPUTATION_CONFIG.setdefault("java_options", "-Xmx4g")
+IMPUTATION_CONFIG.setdefault("threads", 4)
+IMPUTATION_CONFIG.setdefault("extra", "")
+
+if config["params"].get("imputation", {}).get("enabled", False):
+    IMPUTATION_PREFIX = config["params"]["imputation"].get(
+        "output_prefix",
+        "imputation/combined.snp.filtered.beagle",
+    )
+    OPTIONAL_TARGETS.extend([
+        IMPUTATION_PREFIX + ".vcf.gz",
+        IMPUTATION_PREFIX + ".vcf.gz.tbi",
+    ])
+
 if config["params"]["vcf2pca"].get("enabled", True) and len(config["samples"]) >= 3:
     PCA_PLOT_PREFIX = config["params"]["vcf2pca"].get(
         "plot_prefix",
@@ -117,6 +136,7 @@ include: "rules/merge_sample_gvcf.rules"
 include: "rules/get_chr_list.rules"
 include: "rules/vcf_missing.rules"
 include: "rules/vcf_convert.rules"
+include: "rules/imputation.rules"
 include: "rules/vcf2pca.rules"
 include: "rules/vcf2dis.rules"
 include: "rules/snpeff.rules"

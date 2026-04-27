@@ -56,6 +56,8 @@ raw_fastq/{sample}.2.fq.gz
 - `params.vcf2pca.sample_group`: 可选的 PCA 样本分组文件。留空或删除该参数时，不传入 `-InSampleGroup`。
 - `params.vcf2pca.plot_prefix`: 可选的 PCA 作图输出前缀。默认使用 `params.vcf2pca.output_prefix + ".plot"`。
 - `params.vcf2dis.sample_group`: 可选的遗传距离样本分组文件。留空或删除该参数时，不传入 `-InSampleGroup`。
+- `params.imputation.enabled`: 是否运行 Beagle 基因型填充，默认关闭。开启后输出 `imputation/combined.snp.filtered.beagle.vcf.gz` 和索引文件。
+- `params.imputation.java_options`: Beagle 的 Java 内存参数，默认 `-Xmx4g`，可按数据量调整。
 - `params.snpeff.enabled`: 是否运行 SnpEff 注释模块，默认关闭。非模式生物需要提供参考基因组 FASTA 和 GFF3/GTF 基因结构注释文件。
 - `params.snpeff.genome_name`: SnpEff 自定义数据库名称，建议使用不含空格的简单字符串。
 - `params.snpeff.genome_fasta`: 用于构建 SnpEff 数据库的参考基因组 FASTA。
@@ -139,6 +141,7 @@ snakemake --snakefile Snakefile --configfile config.yaml --cores 12 --use-singul
 - `result_vcfs/combined.indel.filtered.vcf.gz`: 过滤后的 INDEL 结果。
 - `missing/`: PLINK 缺失率统计结果和缺失率分布图。
 - `format_convert/`: PLINK binary、PLINK text 和 HapMap 格式转换结果。
+- `imputation/combined.snp.filtered.beagle.vcf.gz`: Beagle 基因型填充后的 SNP VCF，启用 `params.imputation.enabled` 时生成。
 - `pca/ParaChrSNP.eigenvec`: VCF2PCACluster 输出的 PCA 坐标。
 - `pca/ParaChrSNP.eigenval`: VCF2PCACluster 输出的 PCA 特征值。
 - `pca/ParaChrSNP.plot.C.PC1_PC2.p.svg`: Plot2Deig 输出的二维 PCA 图。

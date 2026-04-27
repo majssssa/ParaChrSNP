@@ -67,6 +67,7 @@ EOF
     bwa-mem2 version
     samtools --version | head -n 1
     gatk --version
+    find /opt/conda/envs/parachrsnp/share -path '*beagle*' -name 'beagle*.jar' | head -n 1 | grep -q beagle
     fastp --version
     plink --version
     convert -version | head -n 1

@@ -52,6 +52,7 @@ bcftools
 gatk
 picard
 fastp
+beagle
 plink
 run_pipeline.pl
 rastqc

@@ -1,0 +1,58 @@
+rule imputation:
+    input:
+        vcf=lambda wildcards: config["params"]["imputation"].get(
+            "input_vcf",
+            "result_vcfs/combined.snp.filtered.vcf.gz",
+        )
+    output:
+        vcf=config["params"]["imputation"].get(
+            "output_prefix",
+            "imputation/combined.snp.filtered.beagle",
+        ) + ".vcf.gz",
+        tbi=config["params"]["imputation"].get(
+            "output_prefix",
+            "imputation/combined.snp.filtered.beagle",
+        ) + ".vcf.gz.tbi"
+    params:
+        output_prefix=config["params"]["imputation"].get(
+            "output_prefix",
+            "imputation/combined.snp.filtered.beagle",
+        ),
+        jar=config["params"]["imputation"].get("jar", ""),
+        java_options=config["params"]["imputation"].get("java_options", "-Xmx4g"),
+        extra=config["params"]["imputation"].get("extra", "")
+    threads:
+        config["params"]["imputation"].get("threads", 4)
+    log:
+        "logs/imputation/beagle.log"
+    shell:
+        """
+        mkdir -p $(dirname {params.output_prefix}) logs/imputation
+
+        BEAGLE_JAR="{params.jar}"
+        if [ -z "$BEAGLE_JAR" ]; then
+            for search_dir in /opt/conda/envs/parachrsnp/share /usr/local/share /usr/share; do
+                if [ -d "$search_dir" ]; then
+                    BEAGLE_JAR=$(find "$search_dir" -path '*beagle*' -name 'beagle*.jar' 2>/dev/null | head -n 1)
+                fi
+                if [ -n "$BEAGLE_JAR" ]; then
+                    break
+                fi
+            done
+        fi
+
+        if [ -z "$BEAGLE_JAR" ] || [ ! -s "$BEAGLE_JAR" ]; then
+            echo "Cannot find Beagle jar. Set params.imputation.jar in config.yaml." > {log}
+            exit 1
+        fi
+
+        java {params.java_options} \
+            -jar "$BEAGLE_JAR" \
+            gt={input.vcf} \
+            out={params.output_prefix} \
+            nthreads={threads} \
+            {params.extra} \
+            > {log} 2>&1
+
+        tabix -f -p vcf {output.vcf} >> {log} 2>&1
+        """

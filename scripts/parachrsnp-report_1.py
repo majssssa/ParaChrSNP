@@ -333,6 +333,15 @@ def main():
         ["PLINK text MAP", convert_prefix + ".map", file_size(convert_prefix + ".map")],
         ["HapMap", convert_prefix + ".hmp.txt", file_size(convert_prefix + ".hmp.txt")],
     ]
+    if params.get("imputation", {}).get("enabled", False):
+        imputation_prefix = params.get("imputation", {}).get(
+            "output_prefix",
+            "imputation/combined.snp.filtered.beagle",
+        )
+        output_rows.extend([
+            ["Beagle imputed VCF", imputation_prefix + ".vcf.gz", file_size(imputation_prefix + ".vcf.gz")],
+            ["Beagle imputed VCF index", imputation_prefix + ".vcf.gz.tbi", file_size(imputation_prefix + ".vcf.gz.tbi")],
+        ])
     if params.get("vcf2pca", {}).get("enabled", True) and len(samples) >= 3:
         pca_prefix = params.get("vcf2pca", {}).get("output_prefix", "pca/ParaChrSNP")
         pca_plot_prefix = params.get("vcf2pca", {}).get("plot_prefix", pca_prefix + ".plot")

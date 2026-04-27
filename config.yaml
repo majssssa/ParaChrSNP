@@ -1,36 +1,29 @@
-reference: "reference/Sxygenome.fa"
+reference: "reference/Arabidopsis_thaliana.fasta"
 
 container:
-    image: "ParaChrSNP.sif"
+    image: "ParaChrSNP_ape_ggtree.sif"
 
 samples:
-    1-01: "raw_fastq/1-01"
-    1-02: "raw_fastq/1-02"
+    ERR16804307: "raw_fastq/ERR16804307"
+    ERR16805220: "raw_fastq/ERR16805220"
+    ERR16805679: "raw_fastq/ERR16805679"
+    ERR16806713: "raw_fastq/ERR16806713"
 chromosomes:
-
-  - Chr01
-  - Chr02
-  - Chr03
-  - Chr04
-  - Chr05
-  - Chr06
-  - Chr07
-  - Chr08
-  - Chr09
-  - Chr10
-  - Chr11
-  - Chr12
-
+  - NC_003070.9
+  - NC_003071.7
+  - NC_003074.8
+  - NC_003075.7
+  - NC_003076.8
 params:
     qc:
-        threads: 8
+        threads: 4
         extra: "--nozip"
 
     bwa:
-        bwa_threads: 16
+        bwa_threads: 4
 
     fastp:
-        fastp_threads: 16
+        fastp_threads: 4
 
     haplotype_caller:
         java_options: "--java-options \"-Xms512m -Xmx4g\""
@@ -79,7 +72,7 @@ params:
         executable: "VCF2PCACluster"
         sample_group: ""
         output_prefix: "pca/ParaChrSNP"
-        threads: 16
+        threads: 4
         extra: ""
 
     vcf2dis:

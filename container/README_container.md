@@ -61,6 +61,7 @@ Plot2Deig
 Plot3Deig
 snpEff
 convert
+rsvg-convert
 Rscript
 ```
 

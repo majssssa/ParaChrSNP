@@ -38,6 +38,8 @@ if config["params"]["vcf2pca"].get("enabled", True) and len(config["samples"]) >
         config["params"]["vcf2pca"]["output_prefix"] + ".eigenval",
         PCA_PLOT_PREFIX + ".C.PC1_PC2.p.svg",
         PCA_PLOT_PREFIX + ".N.PC1_PC2.p.svg",
+        PCA_PLOT_PREFIX + ".C.PC1_PC2.p.png",
+        PCA_PLOT_PREFIX + ".N.PC1_PC2.p.png",
         PCA_PLOT_PREFIX + ".C.3DPC1PC2PC3.pdf",
         PCA_PLOT_PREFIX + ".N.3DPC1PC2PC3.pdf",
     ])

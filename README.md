@@ -142,6 +142,7 @@ snakemake --snakefile Snakefile --configfile config.yaml --cores 12 --use-singul
 - `pca/ParaChrSNP.eigenvec`: VCF2PCACluster 输出的 PCA 坐标。
 - `pca/ParaChrSNP.eigenval`: VCF2PCACluster 输出的 PCA 特征值。
 - `pca/ParaChrSNP.plot.C.PC1_PC2.p.svg`: Plot2Deig 输出的二维 PCA 图。
+- `pca/ParaChrSNP.plot.C.PC1_PC2.p.png`: 由 `rsvg-convert` 从二维 PCA SVG 重新转换得到的 PNG 图，避免 ImageMagick 字体解析导致空白图。
 - `pca/ParaChrSNP.plot.C.3DPC1PC2PC3.pdf`: Plot3Deig 输出的三维 PCA 图。
 - `dis/ParaChrSNP.p_dis.mat`: VCF2Dis 输出的样本遗传距离矩阵。
 - `dis/ParaChrSNP.p_dis.nwk`: VCF2Dis 输出的 Newick 格式系统发育树。

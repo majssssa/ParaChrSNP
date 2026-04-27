@@ -17,6 +17,7 @@ dependencies:
   - tassel
   - snpeff
   - imagemagick
+  - librsvg
   - r-base
   - r-ape
   - r-dplyr

@@ -7,6 +7,8 @@ rule vcf2pca:
         eigenval=config["params"]["vcf2pca"]["output_prefix"] + ".eigenval",
         plot2_c_svg=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot") + ".C.PC1_PC2.p.svg",
         plot2_n_svg=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot") + ".N.PC1_PC2.p.svg",
+        plot2_c_png=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot") + ".C.PC1_PC2.p.png",
+        plot2_n_png=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot") + ".N.PC1_PC2.p.png",
         plot3_c_pdf=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot") + ".C.3DPC1PC2PC3.pdf",
         plot3_n_pdf=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot") + ".N.3DPC1PC2PC3.pdf"
     params:
@@ -49,4 +51,14 @@ rule vcf2pca:
             -InFile {output.eigenvec} \
             -OutPut {params.plot_prefix} \
             >> {log} 2>&1
+
+        for svg in {params.output_prefix}*.svg {params.plot_prefix}*.svg; do
+            if [ -s "$svg" ]; then
+                rsvg-convert \
+                    -f png \
+                    -o "${{svg%.svg}}.png" \
+                    "$svg" \
+                    >> {log} 2>&1
+            fi
+        done
         """

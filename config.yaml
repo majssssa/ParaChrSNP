@@ -67,6 +67,15 @@ params:
         tassel_memory: "-Xmx10g"
         tassel_extra: ""
 
+    imputation:
+        enabled: true
+        input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
+        output_prefix: "imputation/combined.snp.filtered.beagle"
+        jar: ""
+        java_options: "-Xmx4g"
+        threads: 4
+        extra: ""
+
     vcf2pca:
         enabled: true
         executable: "VCF2PCACluster"
@@ -82,4 +91,20 @@ params:
         output_matrix: "dis/ParaChrSNP.p_dis.mat"
         output_tree: "dis/ParaChrSNP.p_dis.nwk"
         tree_method: 1
+        extra: ""
+
+    snpeff:
+        enabled: true
+        annotate_snp: true
+        annotate_indel: false
+        executable: "snpEff"
+        genome_name: "custom_genome"
+        data_dir: "annotation/snpeff_data"
+        config_file: "annotation/snpeff.config"
+        genome_fasta: "reference/Arabidopsis_thaliana.fasta"
+        annotation_file: "reference/Arabidopsis_thaliana.gff"
+        annotation_format: "gff3"
+        output_prefix: "annotation/combined"
+        database_done: "annotation/snpeff_db.done"
+        java_options: "-Xmx32g"
         extra: ""

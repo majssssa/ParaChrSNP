@@ -60,6 +60,8 @@ VCF2PCACluster
 Plot2Deig
 Plot3Deig
 snpEff
+convert
+Rscript
 ```
 
 容器还会设置：

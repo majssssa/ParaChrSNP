@@ -69,6 +69,8 @@ EOF
     gatk --version
     fastp --version
     plink --version
+    convert -version | head -n 1
+    Rscript -e 'library(scatterplot3d); cat(as.character(packageVersion("scatterplot3d")), "\n")'
     run_pipeline.pl -h >/dev/null 2>&1 || true
     rastqc --version
     VCF2Dis 2>&1 | head -n 1 || true

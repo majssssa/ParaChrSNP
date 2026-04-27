@@ -16,9 +16,11 @@ dependencies:
   - plink
   - tassel
   - snpeff
+  - imagemagick
   - r-base
   - r-ape
   - r-dplyr
+  - r-scatterplot3d
   - bioconductor-ggtree
   - pandas
   - numpy

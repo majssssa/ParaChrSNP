@@ -293,6 +293,18 @@ def main():
             ["Distance matrix", params.get("vcf2dis", {}).get("output_matrix", "dis/ParaChrSNP.p_dis.mat"), file_size(params.get("vcf2dis", {}).get("output_matrix", "dis/ParaChrSNP.p_dis.mat"))],
             ["NJ tree", params.get("vcf2dis", {}).get("output_tree", "dis/ParaChrSNP.p_dis.nwk"), file_size(params.get("vcf2dis", {}).get("output_tree", "dis/ParaChrSNP.p_dis.nwk"))],
         ])
+    if params.get("snpeff", {}).get("enabled", False):
+        snpeff_prefix = params.get("snpeff", {}).get("output_prefix", "annotation/combined")
+        if params.get("snpeff", {}).get("annotate_snp", True):
+            output_rows.extend([
+                ["SnpEff SNP VCF", snpeff_prefix + ".snp.snpeff.vcf.gz", file_size(snpeff_prefix + ".snp.snpeff.vcf.gz")],
+                ["SnpEff SNP report", snpeff_prefix + ".snp.snpeff.html", file_size(snpeff_prefix + ".snp.snpeff.html")],
+            ])
+        if params.get("snpeff", {}).get("annotate_indel", False):
+            output_rows.extend([
+                ["SnpEff INDEL VCF", snpeff_prefix + ".indel.snpeff.vcf.gz", file_size(snpeff_prefix + ".indel.snpeff.vcf.gz")],
+                ["SnpEff INDEL report", snpeff_prefix + ".indel.snpeff.html", file_size(snpeff_prefix + ".indel.snpeff.html")],
+            ])
 
     log_findings = parse_log_errors("logs")
     log_rows = [[path, message] for path, message in log_findings] or [["No error-like messages detected", "NA"]]

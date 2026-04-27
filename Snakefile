@@ -12,6 +12,22 @@ CHROM_PATTERN = "|".join(re.escape(chrom) for chrom in config["chromosomes"])
 
 OPTIONAL_TARGETS = []
 
+SNPEFF_CONFIG = config["params"].setdefault("snpeff", {})
+SNPEFF_CONFIG.setdefault("enabled", False)
+SNPEFF_CONFIG.setdefault("annotate_snp", True)
+SNPEFF_CONFIG.setdefault("annotate_indel", False)
+SNPEFF_CONFIG.setdefault("executable", "snpEff")
+SNPEFF_CONFIG.setdefault("genome_name", "custom_genome")
+SNPEFF_CONFIG.setdefault("data_dir", "annotation/snpeff_data")
+SNPEFF_CONFIG.setdefault("config_file", "annotation/snpeff.config")
+SNPEFF_CONFIG.setdefault("genome_fasta", config["reference"])
+SNPEFF_CONFIG.setdefault("annotation_file", "annotation/genes.gff3")
+SNPEFF_CONFIG.setdefault("annotation_format", "gff3")
+SNPEFF_CONFIG.setdefault("output_prefix", "annotation/combined")
+SNPEFF_CONFIG.setdefault("database_done", "annotation/snpeff_db.done")
+SNPEFF_CONFIG.setdefault("java_options", "-Xmx8g")
+SNPEFF_CONFIG.setdefault("extra", "")
+
 if config["params"]["vcf2pca"].get("enabled", True) and len(config["samples"]) >= 3:
     PCA_PLOT_PREFIX = config["params"]["vcf2pca"].get(
         "plot_prefix",
@@ -31,6 +47,26 @@ if config["params"]["vcf2dis"].get("enabled", True) and len(config["samples"]) >
         config["params"]["vcf2dis"]["output_matrix"],
         config["params"]["vcf2dis"]["output_tree"],
     ])
+
+if config["params"].get("snpeff", {}).get("enabled", False):
+    SNPEFF_PREFIX = config["params"]["snpeff"].get("output_prefix", "annotation/combined")
+    OPTIONAL_TARGETS.append(
+        config["params"]["snpeff"].get("database_done", "annotation/snpeff_db.done")
+    )
+    if config["params"]["snpeff"].get("annotate_snp", True):
+        OPTIONAL_TARGETS.extend([
+            SNPEFF_PREFIX + ".snp.snpeff.vcf.gz",
+            SNPEFF_PREFIX + ".snp.snpeff.vcf.gz.tbi",
+            SNPEFF_PREFIX + ".snp.snpeff.html",
+            SNPEFF_PREFIX + ".snp.snpeff.genes.txt",
+        ])
+    if config["params"]["snpeff"].get("annotate_indel", False):
+        OPTIONAL_TARGETS.extend([
+            SNPEFF_PREFIX + ".indel.snpeff.vcf.gz",
+            SNPEFF_PREFIX + ".indel.snpeff.vcf.gz.tbi",
+            SNPEFF_PREFIX + ".indel.snpeff.html",
+            SNPEFF_PREFIX + ".indel.snpeff.genes.txt",
+        ])
 
 wildcard_constraints:
     sample=SAMPLE_PATTERN,
@@ -81,4 +117,5 @@ include: "rules/vcf_missing.rules"
 include: "rules/vcf_convert.rules"
 include: "rules/vcf2pca.rules"
 include: "rules/vcf2dis.rules"
+include: "rules/snpeff.rules"
 include: "rules/report.rules"

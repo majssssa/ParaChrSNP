@@ -201,6 +201,32 @@ def check_optional_files(config, results):
         else:
             add_result(results, "INFO", f"{module}.sample_group", "passed", f"Sample group file is valid: {sample_group}")
 
+    snpeff_cfg = params.get("snpeff", {})
+    if snpeff_cfg.get("enabled", False):
+        genome_fasta = snpeff_cfg.get("genome_fasta")
+        annotation_file = snpeff_cfg.get("annotation_file")
+        for key, path in (("genome_fasta", genome_fasta), ("annotation_file", annotation_file)):
+            if not path:
+                add_result(results, "ERROR", f"snpeff.{key}", "failed", f"Missing required SnpEff config key: {key}")
+                continue
+            exists, readable, size, _ = file_state(path)
+            if not exists:
+                add_result(results, "ERROR", f"snpeff.{key}", "failed", f"SnpEff input file does not exist: {path}")
+            elif not readable:
+                add_result(results, "ERROR", f"snpeff.{key}", "failed", f"SnpEff input file is not readable: {path}")
+            elif size == 0:
+                add_result(results, "ERROR", f"snpeff.{key}", "failed", f"SnpEff input file is empty: {path}")
+            else:
+                add_result(results, "INFO", f"snpeff.{key}", "passed", f"SnpEff input file is readable: {path}")
+
+        annotation_format = snpeff_cfg.get("annotation_format", "gff3")
+        if annotation_format not in ("gff3", "gtf"):
+            add_result(results, "ERROR", "snpeff.annotation_format", "failed", "SnpEff annotation_format must be gff3 or gtf.")
+        else:
+            add_result(results, "INFO", "snpeff.annotation_format", "passed", f"SnpEff annotation format: {annotation_format}")
+    else:
+        add_result(results, "INFO", "snpeff", "passed", "SnpEff annotation module is disabled.")
+
 
 def check_container(config, results):
     image = (config.get("container") or {}).get("image")

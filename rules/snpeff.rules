@@ -1,0 +1,146 @@
+rule snpeff_prepare_database:
+    input:
+        fasta=lambda wildcards: config["params"]["snpeff"]["genome_fasta"],
+        annotation=lambda wildcards: config["params"]["snpeff"]["annotation_file"]
+    output:
+        fasta=f"{config['params']['snpeff']['data_dir']}/{config['params']['snpeff']['genome_name']}/sequences.fa",
+        genes=f"{config['params']['snpeff']['data_dir']}/{config['params']['snpeff']['genome_name']}/genes.gff",
+        config_file=config["params"]["snpeff"]["config_file"]
+    params:
+        genome_name=config["params"]["snpeff"]["genome_name"],
+        data_dir=config["params"]["snpeff"]["data_dir"]
+    log:
+        "logs/snpeff/prepare_database.log"
+    shell:
+        """
+        mkdir -p {params.data_dir}/{params.genome_name} $(dirname {output.config_file}) logs/snpeff
+        cp -f {input.fasta} {output.fasta}
+        cp -f {input.annotation} {output.genes}
+
+        cat > {output.config_file} <<EOF
+data.dir = {params.data_dir}
+{params.genome_name}.genome : {params.genome_name}
+EOF
+        echo "Prepared SnpEff database files for {params.genome_name}" > {log}
+        """
+
+
+rule snpeff_build_database:
+    input:
+        fasta=f"{config['params']['snpeff']['data_dir']}/{config['params']['snpeff']['genome_name']}/sequences.fa",
+        genes=f"{config['params']['snpeff']['data_dir']}/{config['params']['snpeff']['genome_name']}/genes.gff",
+        config_file=config["params"]["snpeff"]["config_file"]
+    output:
+        predictor=f"{config['params']['snpeff']['data_dir']}/{config['params']['snpeff']['genome_name']}/snpEffectPredictor.bin",
+        done=config["params"]["snpeff"].get("database_done", "annotation/snpeff_db.done")
+    params:
+        executable=config["params"]["snpeff"].get("executable", "snpEff"),
+        genome_name=config["params"]["snpeff"]["genome_name"],
+        data_dir=config["params"]["snpeff"]["data_dir"],
+        annotation_format=config["params"]["snpeff"].get("annotation_format", "gff3")
+    log:
+        "logs/snpeff/build_database.log"
+    shell:
+        """
+        mkdir -p $(dirname {output.done}) logs/snpeff
+        rm -f {output.done}
+
+        if [ "{params.annotation_format}" = "gff3" ]; then
+            build_flag="-gff3"
+        elif [ "{params.annotation_format}" = "gtf" ]; then
+            build_flag="-gtf22"
+        else
+            echo "Unsupported SnpEff annotation_format: {params.annotation_format}. Use gff3 or gtf." > {log}
+            exit 1
+        fi
+
+        {params.executable} build \
+            -c {input.config_file} \
+            -dataDir {params.data_dir} \
+            $build_flag \
+            -v {params.genome_name} \
+            > {log} 2>&1
+
+        test -s {output.predictor}
+        touch {output.done}
+        """
+
+
+rule snpeff_annotate_snp:
+    input:
+        vcf="result_vcfs/combined.snp.filtered.vcf.gz",
+        db_done=config["params"]["snpeff"].get("database_done", "annotation/snpeff_db.done"),
+        config_file=config["params"]["snpeff"]["config_file"]
+    output:
+        vcf=config["params"]["snpeff"].get("output_prefix", "annotation/combined") + ".snp.snpeff.vcf.gz",
+        tbi=config["params"]["snpeff"].get("output_prefix", "annotation/combined") + ".snp.snpeff.vcf.gz.tbi",
+        html=config["params"]["snpeff"].get("output_prefix", "annotation/combined") + ".snp.snpeff.html",
+        genes=config["params"]["snpeff"].get("output_prefix", "annotation/combined") + ".snp.snpeff.genes.txt"
+    params:
+        executable=config["params"]["snpeff"].get("executable", "snpEff"),
+        genome_name=config["params"]["snpeff"]["genome_name"],
+        data_dir=config["params"]["snpeff"]["data_dir"],
+        java_options=config["params"]["snpeff"].get("java_options", ""),
+        extra=config["params"]["snpeff"].get("extra", "")
+    log:
+        "logs/snpeff/annotate_snp.log"
+    shell:
+        """
+        mkdir -p $(dirname {output.vcf}) logs/snpeff
+        {params.executable} {params.java_options} \
+            -c {input.config_file} \
+            -dataDir {params.data_dir} \
+            -v \
+            -stats {output.html} \
+            {params.extra} \
+            {params.genome_name} \
+            {input.vcf} \
+            2> {log} \
+            | bgzip -c > {output.vcf}
+
+        tabix -f -p vcf {output.vcf}
+        test -s {output.vcf}
+        test -s {output.tbi}
+        test -s {output.html}
+        test -s {output.genes}
+        """
+
+
+rule snpeff_annotate_indel:
+    input:
+        vcf="result_vcfs/combined.indel.filtered.vcf.gz",
+        db_done=config["params"]["snpeff"].get("database_done", "annotation/snpeff_db.done"),
+        config_file=config["params"]["snpeff"]["config_file"]
+    output:
+        vcf=config["params"]["snpeff"].get("output_prefix", "annotation/combined") + ".indel.snpeff.vcf.gz",
+        tbi=config["params"]["snpeff"].get("output_prefix", "annotation/combined") + ".indel.snpeff.vcf.gz.tbi",
+        html=config["params"]["snpeff"].get("output_prefix", "annotation/combined") + ".indel.snpeff.html",
+        genes=config["params"]["snpeff"].get("output_prefix", "annotation/combined") + ".indel.snpeff.genes.txt"
+    params:
+        executable=config["params"]["snpeff"].get("executable", "snpEff"),
+        genome_name=config["params"]["snpeff"]["genome_name"],
+        data_dir=config["params"]["snpeff"]["data_dir"],
+        java_options=config["params"]["snpeff"].get("java_options", ""),
+        extra=config["params"]["snpeff"].get("extra", "")
+    log:
+        "logs/snpeff/annotate_indel.log"
+    shell:
+        """
+        mkdir -p $(dirname {output.vcf}) logs/snpeff
+        {params.executable} {params.java_options} \
+            -c {input.config_file} \
+            -dataDir {params.data_dir} \
+            -v \
+            -stats {output.html} \
+            {params.extra} \
+            {params.genome_name} \
+            {input.vcf} \
+            2> {log} \
+            | bgzip -c > {output.vcf}
+
+        tabix -f -p vcf {output.vcf}
+        test -s {output.vcf}
+        test -s {output.tbi}
+        test -s {output.html}
+        test -s {output.genes}
+        """

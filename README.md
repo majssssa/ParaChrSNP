@@ -55,6 +55,11 @@ raw_fastq/{sample}.2.fq.gz
 - `params.vcf2pca.sample_group`: 可选的 PCA 样本分组文件。留空或删除该参数时，不传入 `-InSampleGroup`。
 - `params.vcf2pca.plot_prefix`: 可选的 PCA 作图输出前缀。默认使用 `params.vcf2pca.output_prefix + ".plot"`。
 - `params.vcf2dis.sample_group`: 可选的遗传距离样本分组文件。留空或删除该参数时，不传入 `-InSampleGroup`。
+- `params.snpeff.enabled`: 是否运行 SnpEff 注释模块，默认关闭。非模式生物需要提供参考基因组 FASTA 和 GFF3/GTF 基因结构注释文件。
+- `params.snpeff.genome_name`: SnpEff 自定义数据库名称，建议使用不含空格的简单字符串。
+- `params.snpeff.genome_fasta`: 用于构建 SnpEff 数据库的参考基因组 FASTA。
+- `params.snpeff.annotation_file`: 用于构建 SnpEff 数据库的 GFF3/GTF 注释文件。
+- `params.snpeff.annotation_format`: 注释文件格式，可选 `gff3` 或 `gtf`。
 
 ## 运行前检查
 
@@ -139,6 +144,10 @@ snakemake --snakefile Snakefile --configfile config.yaml --cores 12 --use-singul
 - `pca/ParaChrSNP.plot.C.3DPC1PC2PC3.pdf`: Plot3Deig 输出的三维 PCA 图。
 - `dis/ParaChrSNP.p_dis.mat`: VCF2Dis 输出的样本遗传距离矩阵。
 - `dis/ParaChrSNP.p_dis.nwk`: VCF2Dis 输出的 Newick 格式系统发育树。
+- `annotation/snpeff_data/`: SnpEff 自定义物种数据库目录，启用 `params.snpeff.enabled` 时生成。
+- `annotation/combined.snp.snpeff.vcf.gz`: SnpEff 注释后的 SNP VCF。
+- `annotation/combined.snp.snpeff.html`: SnpEff SNP 注释统计报告。
+- `annotation/combined.indel.snpeff.vcf.gz`: SnpEff 注释后的 INDEL VCF，仅在 `params.snpeff.annotate_indel: true` 时生成。
 - `reports/precheck.html`: 运行前检查报告。
 - `reports/ParaChrSNP_report.html`: 流程汇总 HTML 报告，包含样本数、染色体数、质控、清洗、去重复、变异数量、缺失率和下游输出文件概览。
 - `reports/ParaChrSNP_summary.tsv`: 流程核心统计指标表格，方便继续整理或作图。

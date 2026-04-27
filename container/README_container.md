@@ -56,6 +56,9 @@ run_pipeline.pl
 rastqc
 VCF2Dis
 VCF2PCACluster
+Plot2Deig
+Plot3Deig
+snpEff
 ```
 
 容器还会设置：

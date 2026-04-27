@@ -4,7 +4,7 @@
   <img src="figures/ParaChrSNP_icon.png" alt="ParaChrSNP icon" width="1000">
 </p>
 
-`ParaChrSNP` 是一个按染色体并行进行 SNP calling 的 Snakemake 流程。流程从双端 FASTQ 开始，依次完成原始数据质控、`fastp` 清洗、`bwa mem | samtools sort` 比对、GATK 按染色体 calling、GVCF 合并、联合分型、SNP/INDEL 过滤、VCF 缺失率统计、常用格式转换、PCA 和遗传距离/系统发育树分析。
+`ParaChrSNP` 是一个按染色体并行进行 SNP calling 的 Snakemake 流程。流程从双端 FASTQ 开始，依次完成原始数据质控、`fastp` 清洗、`bwa-mem2 mem | samtools sort` 比对、GATK 按染色体 calling、GVCF 合并、联合分型、SNP/INDEL 过滤、VCF 缺失率统计、常用格式转换、PCA 和遗传距离/系统发育树分析。
 
 ## Workflow
 
@@ -49,6 +49,7 @@ raw_fastq/{sample}.2.fq.gz
 - `reference`: 参考基因组 FASTA 路径。
 - `samples`: 样本名和 FASTQ 文件前缀。
 - `chromosomes`: 需要逐条染色体 calling 的染色体名称，必须和参考基因组 FASTA 中的序列 ID 一致。
+- `params.bwa.executable`: 比对程序，默认使用 `bwa-mem2`，也可以设置为自定义路径下的 `bwa-mem2` 可执行文件。
 - `params.snp_filter` 和 `params.indel_filter`: SNP/INDEL 过滤参数。
 - `params.vcf2pca.enabled`: 是否在完整流程中运行 PCA 分析，`true` 表示运行，`false` 表示不运行。VCF2PCACluster 至少需要 3 个样本；如果 `samples` 少于 3 个，完整流程会自动跳过该模块。
 - `params.vcf2dis.enabled`: 是否在完整流程中运行遗传距离和系统发育树分析，`true` 表示运行，`false` 表示不运行。VCF2Dis 构建系统发育树至少需要 3 个样本；如果 `samples` 少于 3 个，完整流程会自动跳过该模块。

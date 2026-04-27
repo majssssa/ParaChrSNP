@@ -83,6 +83,8 @@ slurm-*.out
 *.amb
 *.ann
 *.bwt
+*.0123
+*.bwt.2bit.64
 *.pac
 *.sa
 *.fai

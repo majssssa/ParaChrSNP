@@ -1,16 +1,17 @@
 rule bwa_mem:
     input:
+        idx0123=config['reference'] + ".0123",
         amb=config['reference'] + ".amb",
         ann=config['reference'] + ".ann",
-        bwt=config['reference'] + ".bwt",
+        bwt=config['reference'] + ".bwt.2bit.64",
         pac=config['reference'] + ".pac",
-        sa=config['reference'] + ".sa",
         ref=config['reference'],
         fq1="clean_reads/{sample}.1.clean.fq.gz",
         fq2="clean_reads/{sample}.2.clean.fq.gz"
     output:
         "sorted_reads/{sample}.sort.bam"
     params:
+        executable=config["params"].get("bwa", {}).get("executable", "bwa-mem2"),
         rg=r"@RG\tID:{sample}\tPL:illumina\tPU:illumina\tLB:{sample}\tSM:{sample}",
         sort_prefix="sorted_reads/{sample}"
     log:
@@ -19,7 +20,7 @@ rule bwa_mem:
     shell:
         """
         (
-            bwa mem \
+            {params.executable} mem \
                 -R '{params.rg}' \
                 -t {threads} \
                 {input.ref} \

@@ -46,6 +46,7 @@ snakemake --snakefile Snakefile --configfile config.yaml --cores 30 --use-singul
 ```text
 snakemake
 bwa
+bwa-mem2
 samtools
 bcftools
 gatk

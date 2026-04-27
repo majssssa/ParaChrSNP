@@ -15,6 +15,9 @@ rule report:
         plink_ped=config["params"]["vcf_convert"]["output_prefix"] + ".ped",
         plink_map=config["params"]["vcf_convert"]["output_prefix"] + ".map",
         hapmap=config["params"]["vcf_convert"]["output_prefix"] + ".hmp.txt",
+        reference=config["reference"],
+        reference_fai=config["reference"] + ".fai",
+        script="scripts/parachrsnp-report_1.py",
         optional=lambda wildcards: OPTIONAL_TARGETS
     output:
         html="reports/ParaChrSNP_report.html",
@@ -24,7 +27,7 @@ rule report:
     shell:
         """
         mkdir -p reports logs/report
-        python3 scripts/parachrsnp-report.py \
+        python3 {input.script} \
             --config config.yaml \
             --out-html {output.html} \
             --out-tsv {output.tsv} \

@@ -151,7 +151,7 @@ snakemake --snakefile Snakefile --configfile config.yaml --cores 12 --use-singul
 - `annotation/combined.snp.snpeff.html`: SnpEff SNP 注释统计报告。
 - `annotation/combined.indel.snpeff.vcf.gz`: SnpEff 注释后的 INDEL VCF，仅在 `params.snpeff.annotate_indel: true` 时生成。
 - `reports/precheck.html`: 运行前检查报告。
-- `reports/ParaChrSNP_report.html`: 流程汇总 HTML 报告，包含样本数、染色体数、质控、清洗、去重复、变异数量、缺失率和下游输出文件概览。
+- `reports/ParaChrSNP_report.html`: 流程汇总 HTML 报告，包含样本数、染色体数、质控、清洗、测序深度、去重复、变异数量、缺失率和下游输出文件概览。
 - `reports/ParaChrSNP_summary.tsv`: 流程核心统计指标表格，方便继续整理或作图。
 
 

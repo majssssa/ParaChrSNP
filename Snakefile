@@ -1,5 +1,6 @@
 configfile: "config.yaml"
 
+import os
 import re
 
 container: config.get("container", {}).get("image", "ParaChrSNP.sif")
@@ -26,6 +27,7 @@ SNPEFF_CONFIG.setdefault("annotation_format", "gff3")
 SNPEFF_CONFIG.setdefault("output_prefix", "annotation/combined")
 SNPEFF_CONFIG.setdefault("database_done", "annotation/snpeff_db.done")
 SNPEFF_CONFIG.setdefault("java_options", "-Xmx8g")
+SNPEFF_CONFIG.setdefault("build_check_options", "-noCheckCds -noCheckProtein")
 SNPEFF_CONFIG.setdefault("extra", "")
 
 IMPUTATION_CONFIG = config["params"].setdefault("imputation", {})

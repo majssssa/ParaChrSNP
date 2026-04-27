@@ -63,6 +63,8 @@ raw_fastq/{sample}.2.fq.gz
 - `params.snpeff.genome_fasta`: 用于构建 SnpEff 数据库的参考基因组 FASTA。
 - `params.snpeff.annotation_file`: 用于构建 SnpEff 数据库的 GFF3/GTF 注释文件。
 - `params.snpeff.annotation_format`: 注释文件格式，可选 `gff3` 或 `gtf`。
+- `params.snpeff.build_check_options`: SnpEff 构建数据库时的校验控制参数，默认 `-noCheckCds -noCheckProtein`，适合没有 CDS/protein FASTA 的非模式生物注释。
+- SnpEff 自定义数据库默认只保留 `chromosomes` 中配置的序列和注释，避免未参与 calling 的叶绿体、线粒体或未定位序列中的异常注释导致数据库构建失败。
 
 ## 运行前检查
 

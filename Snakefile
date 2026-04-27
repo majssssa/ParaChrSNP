@@ -13,9 +13,17 @@ CHROM_PATTERN = "|".join(re.escape(chrom) for chrom in config["chromosomes"])
 OPTIONAL_TARGETS = []
 
 if config["params"]["vcf2pca"].get("enabled", True) and len(config["samples"]) >= 3:
+    PCA_PLOT_PREFIX = config["params"]["vcf2pca"].get(
+        "plot_prefix",
+        config["params"]["vcf2pca"]["output_prefix"] + ".plot",
+    )
     OPTIONAL_TARGETS.extend([
         config["params"]["vcf2pca"]["output_prefix"] + ".eigenvec",
         config["params"]["vcf2pca"]["output_prefix"] + ".eigenval",
+        PCA_PLOT_PREFIX + ".C.PC1_PC2.p.svg",
+        PCA_PLOT_PREFIX + ".N.PC1_PC2.p.svg",
+        PCA_PLOT_PREFIX + ".C.3DPC1PC2PC3.pdf",
+        PCA_PLOT_PREFIX + ".N.3DPC1PC2PC3.pdf",
     ])
 
 if config["params"]["vcf2dis"].get("enabled", True) and len(config["samples"]) >= 3:

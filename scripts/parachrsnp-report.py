@@ -281,9 +281,12 @@ def main():
     ]
     if params.get("vcf2pca", {}).get("enabled", True) and len(samples) >= 3:
         pca_prefix = params.get("vcf2pca", {}).get("output_prefix", "pca/ParaChrSNP")
+        pca_plot_prefix = params.get("vcf2pca", {}).get("plot_prefix", pca_prefix + ".plot")
         output_rows.extend([
             ["PCA eigenvec", pca_prefix + ".eigenvec", file_size(pca_prefix + ".eigenvec")],
             ["PCA eigenval", pca_prefix + ".eigenval", file_size(pca_prefix + ".eigenval")],
+            ["PCA 2D SVG", pca_plot_prefix + ".C.PC1_PC2.p.svg", file_size(pca_plot_prefix + ".C.PC1_PC2.p.svg")],
+            ["PCA 3D PDF", pca_plot_prefix + ".C.3DPC1PC2PC3.pdf", file_size(pca_plot_prefix + ".C.3DPC1PC2PC3.pdf")],
         ])
     if params.get("vcf2dis", {}).get("enabled", True) and len(samples) >= 3:
         output_rows.extend([

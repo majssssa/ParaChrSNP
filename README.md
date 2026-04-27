@@ -53,6 +53,7 @@ raw_fastq/{sample}.2.fq.gz
 - `params.vcf2pca.enabled`: 是否在完整流程中运行 PCA 分析，`true` 表示运行，`false` 表示不运行。VCF2PCACluster 至少需要 3 个样本；如果 `samples` 少于 3 个，完整流程会自动跳过该模块。
 - `params.vcf2dis.enabled`: 是否在完整流程中运行遗传距离和系统发育树分析，`true` 表示运行，`false` 表示不运行。VCF2Dis 构建系统发育树至少需要 3 个样本；如果 `samples` 少于 3 个，完整流程会自动跳过该模块。
 - `params.vcf2pca.sample_group`: 可选的 PCA 样本分组文件。留空或删除该参数时，不传入 `-InSampleGroup`。
+- `params.vcf2pca.plot_prefix`: 可选的 PCA 作图输出前缀。默认使用 `params.vcf2pca.output_prefix + ".plot"`。
 - `params.vcf2dis.sample_group`: 可选的遗传距离样本分组文件。留空或删除该参数时，不传入 `-InSampleGroup`。
 
 ## 运行前检查
@@ -134,6 +135,8 @@ snakemake --snakefile Snakefile --configfile config.yaml --cores 12 --use-singul
 - `format_convert/`: PLINK binary、PLINK text 和 HapMap 格式转换结果。
 - `pca/ParaChrSNP.eigenvec`: VCF2PCACluster 输出的 PCA 坐标。
 - `pca/ParaChrSNP.eigenval`: VCF2PCACluster 输出的 PCA 特征值。
+- `pca/ParaChrSNP.plot.C.PC1_PC2.p.svg`: Plot2Deig 输出的二维 PCA 图。
+- `pca/ParaChrSNP.plot.C.3DPC1PC2PC3.pdf`: Plot3Deig 输出的三维 PCA 图。
 - `dis/ParaChrSNP.p_dis.mat`: VCF2Dis 输出的样本遗传距离矩阵。
 - `dis/ParaChrSNP.p_dis.nwk`: VCF2Dis 输出的 Newick 格式系统发育树。
 - `reports/precheck.html`: 运行前检查报告。

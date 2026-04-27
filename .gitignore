@@ -43,6 +43,13 @@ logs/
 *.out
 slurm-*.out
 
+# Temporary PCA plot files
+*.PC1_PC2.gn.pdf
+*.PC1_PC2.p.png
+*.PC1_PC2.p.svg
+*.PC1_PC2.r.pdf
+*.3DPC1PC2PC3.pdf
+
 # Large bioinformatics file types
 *.fq
 *.fastq

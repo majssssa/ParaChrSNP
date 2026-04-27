@@ -34,7 +34,17 @@ From: mambaorg/micromamba:1.5.10
         cp /opt/ParaChrSNP/src/VCF2PCACluster/bin/VCF2PCACluster /opt/ParaChrSNP/bin/VCF2PCACluster
     fi
 
-    chmod 755 /opt/ParaChrSNP/bin/VCF2Dis /opt/ParaChrSNP/bin/VCF2PCACluster /opt/ParaChrSNP/bin/rastqc
+    cat > /opt/ParaChrSNP/bin/Plot2Deig <<'EOF'
+#!/bin/sh
+exec /opt/conda/envs/parachrsnp/bin/perl /opt/ParaChrSNP/src/VCF2PCACluster/bin/Plot2Deig "$@"
+EOF
+
+    cat > /opt/ParaChrSNP/bin/Plot3Deig <<'EOF'
+#!/bin/sh
+exec /opt/conda/envs/parachrsnp/bin/perl /opt/ParaChrSNP/src/VCF2PCACluster/bin/Plot3Deig "$@"
+EOF
+
+    chmod 755 /opt/ParaChrSNP/bin/VCF2Dis /opt/ParaChrSNP/bin/VCF2PCACluster /opt/ParaChrSNP/bin/Plot2Deig /opt/ParaChrSNP/bin/Plot3Deig /opt/ParaChrSNP/bin/rastqc
     chmod -R a+rX /opt/ParaChrSNP
 
 %environment
@@ -57,6 +67,8 @@ From: mambaorg/micromamba:1.5.10
     rastqc --version
     VCF2Dis 2>&1 | head -n 1 || true
     VCF2PCACluster 2>&1 | head -n 1 || true
+    Plot2Deig 2>&1 | head -n 1 || true
+    Plot3Deig 2>&1 | head -n 1 || true
 
 %labels
     Author Junpeng_Ma

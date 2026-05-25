@@ -9,7 +9,7 @@
 ## Workflow
 
 <p align="center">
-  <img src="figures/ParaChrSNP.png" alt="ParaChrSNP workflow" width="1000">
+  <img src="figures/Parachrsnp.png" alt="ParaChrSNP workflow" width="1000">
 </p>
 
 **Figure 1.** Overview of the ParaChrSNP workflow. ParaChrSNP is a portable Snakemake workflow packaged with Singularity/Apptainer for chromosome-wise variant discovery and downstream population genomic analysis. Paired-end FASTQ files and a reference genome are first processed through raw-read quality control, read trimming, reference indexing, alignment, duplicate removal and BAM indexing. GATK HaplotypeCaller is then executed in parallel across samples and chromosomes to generate per-chromosome GVCFs, followed by chromosome-level GenomicsDBImport and cohort-level joint genotyping. The resulting VCF is split into SNP and INDEL datasets and filtered using configurable thresholds. Filtered SNPs are further used for genotype missingness assessment, PLINK/HapMap format conversion, and optional PCA, genetic distance estimation and phylogenetic tree construction.

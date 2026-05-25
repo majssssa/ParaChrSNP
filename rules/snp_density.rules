@@ -1,0 +1,32 @@
+if config["params"].get("snp_density", {}).get("enabled", False):
+
+    rule snp_density:
+        input:
+            vcf=lambda wildcards: config["params"]["snp_density"].get("input_vcf", "result_vcfs/combined.snp.filtered.vcf.gz"),
+            ref_fai=config["reference"] + ".fai",
+            plot_script="scripts/snp-density-nature_1.R"
+        output:
+            table=config["params"]["snp_density"].get("output_dir", "snp_density") + "/snp_density.tsv",
+            plot_pdf=config["params"]["snp_density"].get("output_dir", "snp_density") + "/figures/snp_density.pdf",
+            plot_png=config["params"]["snp_density"].get("output_dir", "snp_density") + "/figures/snp_density.png",
+            plot_svg=config["params"]["snp_density"].get("output_dir", "snp_density") + "/figures/snp_density.svg",
+            plot_tiff=config["params"]["snp_density"].get("output_dir", "snp_density") + "/figures/snp_density.tiff"
+        params:
+            output_dir=config["params"]["snp_density"].get("output_dir", "snp_density"),
+            window_size=config["params"]["snp_density"].get("window_size", 1000000),
+            chromosomes=",".join(config["chromosomes"])
+        log:
+            "logs/snp_density/snp_density.log"
+        shell:
+            """
+            mkdir -p {params.output_dir}/figures logs/snp_density
+
+            Rscript {input.plot_script} \
+                --vcf {input.vcf} \
+                --fai {input.ref_fai} \
+                --window-size {params.window_size} \
+                --chromosomes "{params.chromosomes}" \
+                --table {output.table} \
+                --out {output.plot_pdf} \
+                > {log} 2>&1
+            """

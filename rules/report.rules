@@ -17,7 +17,7 @@ rule report:
         hapmap=config["params"]["vcf_convert"]["output_prefix"] + ".hmp.txt",
         reference=config["reference"],
         reference_fai=config["reference"] + ".fai",
-        script="scripts/parachrsnp-report_1.py",
+        script="scripts/parachrsnp-report_4.py",
         optional=lambda wildcards: OPTIONAL_TARGETS
     output:
         html="reports/ParaChrSNP_report.html",

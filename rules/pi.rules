@@ -1,0 +1,45 @@
+if config["params"].get("pi", {}).get("enabled", False):
+
+    rule pi_window:
+        input:
+            vcf=lambda wildcards: config["params"]["pi"].get("input_vcf", "result_vcfs/combined.snp.filtered.vcf.gz"),
+            pop_info=lambda wildcards: [config["params"]["pi"].get("pop_info")] if config["params"]["pi"].get("pop_info") else [],
+            ref_fai=config["reference"] + ".fai",
+            script="scripts/pi-window_1.py",
+            plot_script="scripts/pi-manhattan-nature_1.R"
+        output:
+            combined=config["params"]["pi"].get("output_dir", "pi") + "/combined.windowed.pi.tsv",
+            summary=config["params"]["pi"].get("output_dir", "pi") + "/pi.summary.tsv",
+            plot_pdf=config["params"]["pi"].get("output_dir", "pi") + "/figures/pi_manhattan.pdf",
+            plot_png=config["params"]["pi"].get("output_dir", "pi") + "/figures/pi_manhattan.png",
+            plot_svg=config["params"]["pi"].get("output_dir", "pi") + "/figures/pi_manhattan.svg",
+            plot_tiff=config["params"]["pi"].get("output_dir", "pi") + "/figures/pi_manhattan.tiff"
+        params:
+            output_dir=config["params"]["pi"].get("output_dir", "pi"),
+            window_size=config["params"]["pi"].get("window_size", 100000),
+            window_step=config["params"]["pi"].get("window_step", 10000),
+            pop_info_arg=lambda wildcards, input: f"--pop-info {input.pop_info[0]}" if input.pop_info else "",
+            extra=config["params"]["pi"].get("extra", "")
+        log:
+            "logs/pi/pi_window.log"
+        shell:
+            """
+            mkdir -p {params.output_dir}/figures logs/pi
+
+            python3 {input.script} \
+                --vcf {input.vcf} \
+                {params.pop_info_arg} \
+                --window-size {params.window_size} \
+                --window-step {params.window_step} \
+                --output-dir {params.output_dir} \
+                --combined {output.combined} \
+                --summary {output.summary} \
+                {params.extra} \
+                > {log} 2>&1
+
+            Rscript {input.plot_script} \
+                --pi {output.combined} \
+                --fai {input.ref_fai} \
+                --out {output.plot_pdf} \
+                >> {log} 2>&1
+            """

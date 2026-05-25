@@ -10,13 +10,18 @@ rule vcf2pca:
         plot2_c_png=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot") + ".C.PC1_PC2.p.png",
         plot2_n_png=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot") + ".N.PC1_PC2.p.png",
         plot3_c_pdf=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot") + ".C.3DPC1PC2PC3.pdf",
-        plot3_n_pdf=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot") + ".N.3DPC1PC2PC3.pdf"
+        plot3_n_pdf=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot") + ".N.3DPC1PC2PC3.pdf",
+        plot3_c_png=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot") + ".C.3DPC1PC2PC3.png",
+        plot3_n_png=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot") + ".N.3DPC1PC2PC3.png",
+        plot3_c_svg=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot") + ".C.3DPC1PC2PC3.svg",
+        plot3_n_svg=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot") + ".N.3DPC1PC2PC3.svg"
     params:
         executable=config["params"]["vcf2pca"]["executable"],
         output_prefix=config["params"]["vcf2pca"]["output_prefix"],
         plot_prefix=config["params"]["vcf2pca"].get("plot_prefix", config["params"]["vcf2pca"]["output_prefix"] + ".plot"),
         plot2_executable=config["params"]["vcf2pca"].get("plot2_executable", "Plot2Deig"),
         plot3_executable=config["params"]["vcf2pca"].get("plot3_executable", "Plot3Deig"),
+        plot3_preview_script=config["params"]["vcf2pca"].get("plot3_preview_script", "scripts/pca3d-preview_1.R"),
         extra=config["params"]["vcf2pca"].get("extra", ""),
         sample_count=len(config["samples"]),
         sample_group_arg=lambda wildcards, input: f"-InSampleGroup {input.sample_group}" if input.sample_group else ""
@@ -50,6 +55,11 @@ rule vcf2pca:
         {params.plot3_executable} \
             -InFile {output.eigenvec} \
             -OutPut {params.plot_prefix} \
+            >> {log} 2>&1
+
+        Rscript {params.plot3_preview_script} \
+            {output.eigenvec} \
+            {params.plot_prefix} \
             >> {log} 2>&1
 
         for svg in {params.output_prefix}*.svg {params.plot_prefix}*.svg; do

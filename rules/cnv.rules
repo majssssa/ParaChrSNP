@@ -1,0 +1,128 @@
+if config["params"].get("cnv", {}).get("enabled", False):
+
+    rule cnvnator_call:
+        input:
+            bam="duplicate_removed/{sample}.rmdup.bam",
+            bai="duplicate_removed/{sample}.rmdup.bam.bai",
+            ref=config["reference"]
+        output:
+            root="cnv/{sample}.root",
+            raw="cnv/{sample}.cnvnator.txt"
+        log:
+            "logs/cnvnator/{sample}.log"
+        params:
+            executable=config["params"]["cnv"].get("executable", "cnvnator"),
+            bin_size=config["params"]["cnv"].get("bin_size", 100),
+            reference_dir=config["params"]["cnv"].get("reference_dir", os.path.dirname(config["reference"]) or "."),
+            extra=config["params"]["cnv"].get("extra", "")
+        shell:
+            """
+            mkdir -p cnv logs/cnvnator
+
+            {params.executable} -root {output.root} -tree {input.bam} {params.extra} > {log} 2>&1
+            {params.executable} -root {output.root} -his {params.bin_size} -d {params.reference_dir} {params.extra} >> {log} 2>&1
+            {params.executable} -root {output.root} -stat {params.bin_size} {params.extra} >> {log} 2>&1
+            {params.executable} -root {output.root} -partition {params.bin_size} {params.extra} >> {log} 2>&1
+            {params.executable} -root {output.root} -call {params.bin_size} {params.extra} > {output.raw} 2>> {log}
+            """
+
+
+    rule cnv_to_vcf:
+        input:
+            raw="cnv/{sample}.cnvnator.txt",
+            ref=config["reference"]
+        output:
+            "cnv/{sample}.cnv.vcf"
+        log:
+            "logs/cnvnator/{sample}.vcf.log"
+        params:
+            converter=config["params"]["cnv"].get("vcf_converter", "cnvnator2VCF.pl"),
+            reference_dir=config["params"]["cnv"].get("reference_dir", os.path.dirname(config["reference"]) or ".")
+        shell:
+            """
+            mkdir -p cnv logs/cnvnator
+            ref_split_dir="cnv/reference_fasta_by_chrom"
+            mkdir -p "$ref_split_dir"
+
+            if command -v {params.converter} >/dev/null 2>&1; then
+                converter="{params.converter}"
+            elif [ -x /opt/ParaChrSNP/src/CNVnator/cnvnator2VCF.pl ]; then
+                converter="/opt/ParaChrSNP/src/CNVnator/cnvnator2VCF.pl"
+            else
+                echo "Cannot find cnvnator2VCF.pl" > {log}
+                exit 1
+            fi
+
+            awk -v outdir="$ref_split_dir" '
+                /^>/ {{
+                    if (out) close(out)
+                    name=$1
+                    sub(/^>/, "", name)
+                    out=outdir "/" name ".fa"
+                    print ">" name > out
+                    next
+                }}
+                out {{ print toupper($0) >> out }}
+            ' {input.ref}
+
+            (
+                cd cnv
+                "$converter" -prefix {wildcards.sample} {wildcards.sample}.cnvnator.txt reference_fasta_by_chrom
+            ) 2> {log} | sed 's|^##reference=.*|##reference={input.ref}|' > {output}
+            """
+
+
+    rule cnv_table:
+        input:
+            raw="cnv/{sample}.cnvnator.txt",
+            script="scripts/cnvnator-summary_1.py"
+        output:
+            "cnv/{sample}.cnv.tsv"
+        log:
+            "logs/cnvnator/{sample}.table.log"
+        shell:
+            """
+            mkdir -p cnv logs/cnvnator
+
+            python3 {input.script} filter \
+                --sample {wildcards.sample} \
+                --input {input.raw} \
+                --output {output} \
+                > {log} 2>&1
+            """
+
+
+    rule cnv_summary:
+        input:
+            tables=expand("cnv/{sample}.cnv.tsv", sample=config["samples"]),
+            vcfs=expand("cnv/{sample}.cnv.vcf", sample=config["samples"]),
+            script="scripts/cnvnator-summary_1.py",
+            plot_script="scripts/cnvnator-plot-nature_1.R"
+        output:
+            combined="cnv/combined.cnv.tsv",
+            summary="cnv/combined.cnv.summary.tsv",
+            count_plot="cnv/figures/cnv_count_by_sample.pdf",
+            length_plot="cnv/figures/cnv_length_distribution.pdf",
+            chrom_plot="cnv/figures/cnv_count_by_chromosome.pdf"
+        log:
+            "logs/cnvnator/summary.log"
+        shell:
+            """
+            mkdir -p cnv/figures logs/cnvnator
+
+            python3 {input.script} summary \
+                --inputs {input.tables} \
+                --combined {output.combined} \
+                --summary {output.summary} \
+                --count-plot {output.count_plot} \
+                --length-plot {output.length_plot} \
+                --chrom-plot {output.chrom_plot} \
+                > {log} 2>&1
+
+            Rscript {input.plot_script} \
+                --combined {output.combined} \
+                --count-plot {output.count_plot} \
+                --length-plot {output.length_plot} \
+                --chrom-plot {output.chrom_plot} \
+                >> {log} 2>&1
+            """

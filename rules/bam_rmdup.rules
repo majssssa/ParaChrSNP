@@ -3,7 +3,7 @@ rule bam_rmdup:
         bam="sorted_reads/{sample}.sort.bam",
         dict=reference_dict(config['reference'])
     output:
-        bam=protected("duplicate_removed/{sample}.rmdup.bam"),
+        bam="duplicate_removed/{sample}.rmdup.bam",
         matrix="duplicate_removed/{sample}.dup.txt"
     log:
         "logs/rmdup/{sample}.log"

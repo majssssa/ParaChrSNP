@@ -9,6 +9,7 @@ import argparse
 import gzip
 import html
 import os
+import shutil
 import sys
 from datetime import datetime
 
@@ -201,6 +202,93 @@ def check_optional_files(config, results):
         else:
             add_result(results, "INFO", f"{module}.sample_group", "passed", f"Sample group file is valid: {sample_group}")
 
+    pi_cfg = params.get("pi", {})
+    if pi_cfg.get("enabled", False):
+        pop_info = pi_cfg.get("pop_info")
+        if not pop_info:
+            add_result(results, "INFO", "pi.pop_info", "passed", "No pop_info configured; Pi will be calculated for all samples together.")
+        elif not os.path.exists(pop_info):
+            add_result(results, "ERROR", "pi.pop_info", "failed", f"Configured Pi pop_info file does not exist: {pop_info}")
+        else:
+            group_samples = []
+            with open(pop_info, "r", encoding="utf-8", errors="replace") as handle:
+                for line in handle:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    group_samples.append(line.split()[0])
+            unknown = sorted(set(group_samples) - samples)
+            if unknown:
+                add_result(results, "ERROR", "pi.pop_info", "failed", "Sample(s) in Pi pop_info file not found in config samples: " + ", ".join(unknown))
+            else:
+                add_result(results, "INFO", "pi.pop_info", "passed", f"Pi pop_info file is valid: {pop_info}")
+
+    admixture_cfg = params.get("admixture", {})
+    if admixture_cfg.get("enabled", False):
+        executable = admixture_cfg.get("executable", "admixture")
+        if shutil.which(executable) or (os.path.exists(executable) and os.access(executable, os.X_OK)):
+            add_result(results, "INFO", "admixture.executable", "passed", f"ADMIXTURE executable is available: {executable}")
+        else:
+            add_result(results, "ERROR", "admixture.executable", "failed", f"ADMIXTURE executable was not found: {executable}")
+
+        pop_info = admixture_cfg.get("pop_info")
+        if not pop_info:
+            add_result(results, "INFO", "admixture.pop_info", "passed", "No pop_info configured; samples will be plotted by PLINK FAM order.")
+        elif not os.path.exists(pop_info):
+            add_result(results, "ERROR", "admixture.pop_info", "failed", f"Configured ADMIXTURE pop_info file does not exist: {pop_info}")
+        else:
+            group_samples = []
+            with open(pop_info, "r", encoding="utf-8", errors="replace") as handle:
+                for line in handle:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    group_samples.append(line.split()[0])
+            unknown = sorted(set(group_samples) - samples)
+            if unknown:
+                add_result(results, "ERROR", "admixture.pop_info", "failed", "Sample(s) in ADMIXTURE pop_info file not found in config samples: " + ", ".join(unknown))
+            else:
+                add_result(results, "INFO", "admixture.pop_info", "passed", f"ADMIXTURE pop_info file is valid: {pop_info}")
+
+        try:
+            k_min = int(admixture_cfg.get("k_min", 1))
+            k_max = int(admixture_cfg.get("k_max", 10))
+            if k_min < 1 or k_max < k_min:
+                add_result(results, "ERROR", "admixture.K", "failed", "ADMIXTURE requires k_min >= 1 and k_max >= k_min.")
+            elif k_max > len(samples):
+                add_result(results, "WARNING", "admixture.K", "warning", f"k_max={k_max} is greater than the sample count ({len(samples)}).")
+            else:
+                add_result(results, "INFO", "admixture.K", "passed", f"ADMIXTURE K range: {k_min}-{k_max}")
+        except ValueError:
+            add_result(results, "ERROR", "admixture.K", "failed", "ADMIXTURE k_min and k_max must be integers.")
+
+    ld_decay_cfg = params.get("ld_decay", {})
+    if ld_decay_cfg.get("enabled", False):
+        executable = ld_decay_cfg.get("executable", "PopLDdecay")
+        if shutil.which(executable) or (os.path.exists(executable) and os.access(executable, os.X_OK)):
+            add_result(results, "INFO", "ld_decay.executable", "passed", f"PopLDdecay executable is available: {executable}")
+        else:
+            add_result(results, "ERROR", "ld_decay.executable", "failed", f"PopLDdecay executable was not found: {executable}")
+
+        pop_info = ld_decay_cfg.get("pop_info")
+        if not pop_info:
+            add_result(results, "INFO", "ld_decay.pop_info", "passed", "No pop_info configured; LD decay will be calculated for all samples together.")
+        elif not os.path.exists(pop_info):
+            add_result(results, "ERROR", "ld_decay.pop_info", "failed", f"Configured LD decay pop_info file does not exist: {pop_info}")
+        else:
+            group_samples = []
+            with open(pop_info, "r", encoding="utf-8", errors="replace") as handle:
+                for line in handle:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    group_samples.append(line.split()[0])
+            unknown = sorted(set(group_samples) - samples)
+            if unknown:
+                add_result(results, "ERROR", "ld_decay.pop_info", "failed", "Sample(s) in LD decay pop_info file not found in config samples: " + ", ".join(unknown))
+            else:
+                add_result(results, "INFO", "ld_decay.pop_info", "passed", f"LD decay pop_info file is valid: {pop_info}")
+
     snpeff_cfg = params.get("snpeff", {})
     if snpeff_cfg.get("enabled", False):
         genome_fasta = snpeff_cfg.get("genome_fasta")
@@ -232,6 +320,9 @@ def check_container(config, results):
     image = (config.get("container") or {}).get("image")
     if not image:
         add_result(results, "WARNING", "container.image", "warning", "No container image is configured.")
+        return
+    if os.path.isdir(image) and os.access(image, os.R_OK | os.X_OK):
+        add_result(results, "INFO", "container.image", "passed", f"Container sandbox is readable: {image}")
         return
     exists, readable, size, _ = file_state(image)
     if exists and readable and size > 0:

@@ -1,0 +1,78 @@
+if JOINT_CALLING_METHOD == "genomicsdb":
+
+    rule genomicsdb_sample_map:
+        input:
+            gvcfs=lambda wildcards: expand(
+                "gvcf/{sample}.{chrom}.g.vcf.gz",
+                sample=config["samples"],
+                chrom=wildcards.chrom,
+            )
+        output:
+            "genomicsdb/sample_map/{chrom}.tsv"
+        run:
+            output_path = str(output[0])
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, "w", encoding="utf-8") as handle:
+                for sample in config["samples"]:
+                    handle.write(f"{sample}\tgvcf/{sample}.{wildcards.chrom}.g.vcf.gz\n")
+
+
+    rule genomicsdb_import:
+        input:
+            ref=config["reference"],
+            ref_fai=config["reference"] + ".fai",
+            ref_dict=reference_dict(config["reference"]),
+            sample_map="genomicsdb/sample_map/{chrom}.tsv"
+        output:
+            directory("genomicsdb/workspace/{chrom}")
+        log:
+            "logs/gatk/genomicsdb_import/{chrom}.log"
+        threads:
+            int(JOINT_CALLING_CONFIG.get("reader_threads", 4))
+        params:
+            java_options=JOINT_CALLING_CONFIG.get("import_java_options", '--java-options "-Xms1g -Xmx16g"'),
+            batch_size=JOINT_CALLING_CONFIG.get("batch_size", 50),
+            extra=JOINT_CALLING_CONFIG.get("extra_import", "")
+        shell:
+            """
+            mkdir -p logs/gatk/genomicsdb_import
+            rm -rf {output}
+
+            gatk {params.java_options} GenomicsDBImport \
+                --sample-name-map {input.sample_map} \
+                --genomicsdb-workspace-path {output} \
+                -L {wildcards.chrom} \
+                --reader-threads {threads} \
+                --batch-size {params.batch_size} \
+                {params.extra} \
+                > {log} 2>&1
+            """
+
+
+    rule genotype_chrom:
+        input:
+            ref=config["reference"],
+            ref_fai=config["reference"] + ".fai",
+            ref_dict=reference_dict(config["reference"]),
+            db="genomicsdb/workspace/{chrom}"
+        output:
+            "result_vcfs/by_chrom/{chrom}.vcf.gz"
+        log:
+            "logs/gatk/genotype_chrom/{chrom}.log"
+        params:
+            java_options=JOINT_CALLING_CONFIG.get(
+                "genotype_java_options",
+                config["params"]["genotype_gvcfs"]["java_options"],
+            ),
+            extra=JOINT_CALLING_CONFIG.get("extra_genotype", "")
+        shell:
+            """
+            mkdir -p result_vcfs/by_chrom logs/gatk/genotype_chrom
+
+            gatk {params.java_options} GenotypeGVCFs \
+                -R {input.ref} \
+                -V gendb://{input.db} \
+                {params.extra} \
+                -O {output} \
+                > {log} 2>&1
+            """

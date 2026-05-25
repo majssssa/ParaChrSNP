@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ "${1:-}" == "--version" || "${1:-}" == "version" ]]; then
+    if command -v /usr/bin/apptainer >/dev/null 2>&1; then
+        printf 'singularity version 3.11.0\n'
+        exit 0
+    fi
+fi
+
+exec /usr/bin/apptainer "$@"

@@ -1,0 +1,63 @@
+if config["params"].get("ld_decay", {}).get("enabled", False):
+
+    LD_DECAY_CFG = config["params"]["ld_decay"]
+    LD_DECAY_OUT = LD_DECAY_CFG.get("output_dir", "ld_decay")
+
+    rule ld_decay:
+        input:
+            vcf=LD_DECAY_CFG.get("input_vcf", "result_vcfs/combined.snp.filtered.vcf.gz"),
+            pop_info=lambda wildcards: [LD_DECAY_CFG.get("pop_info")] if LD_DECAY_CFG.get("pop_info") else [],
+            combine_script="scripts/poplddecay-combine_1.py",
+            plot_script="scripts/ld-decay-plot-nature_1.R"
+        output:
+            stats_dir=directory(LD_DECAY_OUT + "/stats"),
+            combined=LD_DECAY_OUT + "/combined.ld_decay.tsv",
+            plot_pdf=LD_DECAY_OUT + "/figures/ld_decay.pdf",
+            plot_png=LD_DECAY_OUT + "/figures/ld_decay.png",
+            plot_svg=LD_DECAY_OUT + "/figures/ld_decay.svg",
+            plot_tiff=LD_DECAY_OUT + "/figures/ld_decay.tiff"
+        params:
+            output_dir=LD_DECAY_OUT,
+            executable=LD_DECAY_CFG.get("executable", "PopLDdecay"),
+            max_dist=LD_DECAY_CFG.get("max_dist", 300),
+            extra=LD_DECAY_CFG.get("extra", "")
+        threads:
+            int(LD_DECAY_CFG.get("threads", 4))
+        log:
+            "logs/ld_decay/ld_decay.log"
+        shell:
+            """
+            mkdir -p {params.output_dir}/stats {params.output_dir}/sample_lists {params.output_dir}/figures {params.output_dir}/logs logs/ld_decay
+            rm -f {params.output_dir}/stats/*.stat.gz {params.output_dir}/sample_lists/*.samples
+
+            if [ -n "{input.pop_info}" ]; then
+                awk -v outdir="{params.output_dir}/sample_lists" 'NF >= 2 && $1 !~ /^#/ {{print $1 >> outdir "/" $2 ".samples"}}' {input.pop_info}
+                for keep in {params.output_dir}/sample_lists/*.samples; do
+                    pop=$(basename "$keep" .samples)
+                    {params.executable} \
+                        -InVCF {input.vcf} \
+                        -OutStat {params.output_dir}/stats/${{pop}} \
+                        -SubPop "$keep" \
+                        -MaxDist {params.max_dist} \
+                        {params.extra} \
+                        > {params.output_dir}/logs/${{pop}}.log 2>&1
+                done
+            else
+                {params.executable} \
+                    -InVCF {input.vcf} \
+                    -OutStat {params.output_dir}/stats/All \
+                    -MaxDist {params.max_dist} \
+                    {params.extra} \
+                    > {params.output_dir}/logs/All.log 2>&1
+            fi
+
+            python3 {input.combine_script} \
+                --stats-dir {params.output_dir}/stats \
+                --combined {output.combined} \
+                > {log} 2>&1
+
+            Rscript {input.plot_script} \
+                --combined {output.combined} \
+                --out {output.plot_pdf} \
+                >> {log} 2>&1
+            """

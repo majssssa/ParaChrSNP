@@ -2,7 +2,7 @@ name: parachrsnp
 channels:
   - bioconda
   - conda-forge
-  - defaults
+  - nodefaults
 dependencies:
   - python=3.10
   - snakemake-minimal
@@ -12,8 +12,13 @@ dependencies:
   - bcftools
   - gatk4
   - picard
+  - cnvnator
+  - make
+  - gxx_linux-64
   - fastp
   - plink
+  - admixture
+  - poplddecay
   - tassel
   - beagle
   - snpeff

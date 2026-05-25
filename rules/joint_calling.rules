@@ -1,12 +1,39 @@
-rule joint_calling:
-    input:
-        ref=config['reference'],
-        gvcf="combined.g.vcf.gz"
-    output:
-        vcf=protected("result_vcfs/combined.vcf.gz")
-    log:
-        "logs/gatk/genotypegvcfs.log"
-    params:
-        config['params']['genotype_gvcfs']['java_options']
-    shell:
-        "gatk GenotypeGVCFs {params} -R {input.ref} -V {input.gvcf} -O {output.vcf} 2> {log}"
+if JOINT_CALLING_METHOD == "combine_gvcfs":
+
+    rule joint_calling:
+        input:
+            ref=config["reference"],
+            gvcf="combined.g.vcf.gz"
+        output:
+            vcf="result_vcfs/combined.vcf.gz"
+        log:
+            "logs/gatk/genotypegvcfs.log"
+        params:
+            java_options=config["params"]["genotype_gvcfs"]["java_options"]
+        shell:
+            "gatk GenotypeGVCFs {params.java_options} -R {input.ref} -V {input.gvcf} -O {output.vcf} 2> {log}"
+
+elif JOINT_CALLING_METHOD == "genomicsdb":
+
+    rule joint_calling:
+        input:
+            vcfs=expand("result_vcfs/by_chrom/{chrom}.vcf.gz", chrom=config["chromosomes"])
+        output:
+            vcf="result_vcfs/combined.vcf.gz"
+        log:
+            "logs/gatk/gather_genotyped_chroms.log"
+        params:
+            java_options=JOINT_CALLING_CONFIG.get(
+                "gather_java_options",
+                config["params"]["combine_vcf"]["java_options"],
+            ),
+            inputs=lambda wildcards, input: " ".join(f"-I {vcf}" for vcf in input.vcfs)
+        shell:
+            """
+            mkdir -p logs/gatk result_vcfs
+
+            gatk {params.java_options} GatherVcfs \
+                {params.inputs} \
+                -O {output.vcf} \
+                > {log} 2>&1
+            """

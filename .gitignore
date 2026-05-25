@@ -29,13 +29,22 @@ clean_reads/
 sorted_reads/
 duplicate_removed/
 gvcf/
+cnv/
+genomicsdb/
 result_vcfs/
 missing/
 format_convert/
 pca/
 dis/
+admixture/
+ld_decay/
+pi/
+snp_density/
 reports/
 annotation/
+imputation/
+web_runs/
+figure-studio-runs/
 
 # Logs and benchmark files
 logs/

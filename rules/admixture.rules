@@ -1,0 +1,106 @@
+if config["params"].get("admixture", {}).get("enabled", False):
+
+    ADMIXTURE_CFG = config["params"]["admixture"]
+    ADMIXTURE_OUT = ADMIXTURE_CFG.get("output_dir", "admixture")
+    ADMIXTURE_K_VALUES = list(range(int(ADMIXTURE_CFG.get("k_min", 1)), int(ADMIXTURE_CFG.get("k_max", 10)) + 1))
+
+    rule admixture_structure:
+        input:
+            bed=ADMIXTURE_CFG.get("input_prefix", config["params"]["vcf_convert"]["output_prefix"]) + ".bed",
+            bim=ADMIXTURE_CFG.get("input_prefix", config["params"]["vcf_convert"]["output_prefix"]) + ".bim",
+            fam=ADMIXTURE_CFG.get("input_prefix", config["params"]["vcf_convert"]["output_prefix"]) + ".fam",
+            pop_info=lambda wildcards: [ADMIXTURE_CFG.get("pop_info")] if ADMIXTURE_CFG.get("pop_info") else [],
+            plot_script="scripts/admixture-plot-nature_1.R"
+        output:
+            pruned_bed=ADMIXTURE_OUT + "/pruned/admixture_pruned.bed",
+            pruned_bim=ADMIXTURE_OUT + "/pruned/admixture_pruned.bim",
+            pruned_fam=ADMIXTURE_OUT + "/pruned/admixture_pruned.fam",
+            q=expand(ADMIXTURE_OUT + "/admixture_pruned.{k}.Q", k=ADMIXTURE_K_VALUES),
+            cv=ADMIXTURE_OUT + "/cv_errors.tsv",
+            structure_pdf=ADMIXTURE_OUT + "/figures/admixture_structure.pdf",
+            structure_png=ADMIXTURE_OUT + "/figures/admixture_structure.png",
+            structure_svg=ADMIXTURE_OUT + "/figures/admixture_structure.svg",
+            structure_tiff=ADMIXTURE_OUT + "/figures/admixture_structure.tiff",
+            cv_pdf=ADMIXTURE_OUT + "/figures/admixture_cv_error.pdf",
+            cv_png=ADMIXTURE_OUT + "/figures/admixture_cv_error.png",
+            cv_svg=ADMIXTURE_OUT + "/figures/admixture_cv_error.svg",
+            cv_tiff=ADMIXTURE_OUT + "/figures/admixture_cv_error.tiff"
+        params:
+            input_prefix=ADMIXTURE_CFG.get("input_prefix", config["params"]["vcf_convert"]["output_prefix"]),
+            output_dir=ADMIXTURE_OUT,
+            normalized_prefix=ADMIXTURE_OUT + "/source/admixture_input",
+            pruned_raw_prefix=ADMIXTURE_OUT + "/pruned/admixture_pruned_raw",
+            executable=ADMIXTURE_CFG.get("executable", "admixture"),
+            k_values=" ".join(str(k) for k in ADMIXTURE_K_VALUES),
+            k_min=int(ADMIXTURE_CFG.get("k_min", 1)),
+            k_max=int(ADMIXTURE_CFG.get("k_max", 10)),
+            cv=int(ADMIXTURE_CFG.get("cv", 10)),
+            prune_window=ADMIXTURE_CFG.get("prune_window", 50),
+            prune_step=ADMIXTURE_CFG.get("prune_step", 10),
+            prune_r2=ADMIXTURE_CFG.get("prune_r2", 0.2),
+            geno=ADMIXTURE_CFG.get("geno", 0.999),
+            pop_info_arg=lambda wildcards, input: f"--pop-info {input.pop_info[0]}" if input.pop_info else "",
+            show_sample_names_arg="--show-sample-names" if ADMIXTURE_CFG.get("show_sample_names", False) else "",
+            plink_extra=ADMIXTURE_CFG.get("plink_extra", config["params"]["vcf_convert"].get("plink_extra", "--allow-extra-chr")),
+            normalize_extra=ADMIXTURE_CFG.get("normalize_extra", "--allow-extra-chr --set-missing-var-ids @:#"),
+            admixture_plink_extra=ADMIXTURE_CFG.get("admixture_plink_extra", "--allow-extra-chr 0"),
+            extra=ADMIXTURE_CFG.get("extra", "")
+        threads:
+            int(ADMIXTURE_CFG.get("threads", 4))
+        log:
+            "logs/admixture/admixture.log"
+        shell:
+            """
+            mkdir -p {params.output_dir}/source {params.output_dir}/pruned {params.output_dir}/logs {params.output_dir}/figures logs/admixture
+
+            plink \
+                --bfile {params.input_prefix} \
+                {params.normalize_extra} \
+                --geno {params.geno} \
+                --make-bed \
+                --out {params.normalized_prefix} \
+                > {log} 2>&1
+
+            plink \
+                --bfile {params.normalized_prefix} \
+                {params.plink_extra} \
+                --indep-pairwise {params.prune_window} {params.prune_step} {params.prune_r2} \
+                --out {params.output_dir}/pruned/prune \
+                >> {log} 2>&1
+
+            plink \
+                --bfile {params.normalized_prefix} \
+                {params.plink_extra} \
+                --extract {params.output_dir}/pruned/prune.prune.in \
+                --make-bed \
+                --out {params.pruned_raw_prefix} \
+                >> {log} 2>&1
+
+            plink \
+                --bfile {params.pruned_raw_prefix} \
+                {params.admixture_plink_extra} \
+                --make-bed \
+                --out {params.output_dir}/pruned/admixture_pruned \
+                >> {log} 2>&1
+
+            rm -f {params.output_dir}/admixture_pruned.*.Q {params.output_dir}/admixture_pruned.*.P {params.output_dir}/logs/K*.log
+            for k in {params.k_values}; do
+                (
+                    cd {params.output_dir}
+                    {params.executable} --cv={params.cv} -j{threads} pruned/admixture_pruned.bed "$k" {params.extra} \
+                        > logs/K${{k}}.log 2>&1
+                )
+            done
+
+            Rscript {input.plot_script} \
+                --q-dir {params.output_dir} \
+                --fam {output.pruned_fam} \
+                {params.pop_info_arg} \
+                --k-min {params.k_min} \
+                --k-max {params.k_max} \
+                {params.show_sample_names_arg} \
+                --cv-out {output.cv} \
+                --structure-out {output.structure_pdf} \
+                --cv-plot-out {output.cv_pdf} \
+                >> {log} 2>&1
+            """

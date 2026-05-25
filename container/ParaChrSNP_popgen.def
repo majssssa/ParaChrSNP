@@ -1,0 +1,53 @@
+Bootstrap: localimage
+From: ParaChrSNP_cnv_fixed.sif
+
+%files
+    Snakefile /opt/ParaChrSNP/Snakefile
+    rules /opt/ParaChrSNP/rules
+    scripts /opt/ParaChrSNP/scripts
+    README.md /opt/ParaChrSNP/README.md
+    container/environment.yaml /opt/ParaChrSNP/container_environment.yaml
+
+%post
+    set -eux
+    unset http_proxy HTTP_PROXY https_proxy HTTPS_PROXY all_proxy ALL_PROXY || true
+
+    micromamba install -y -n parachrsnp -c bioconda -c conda-forge --override-channels admixture poplddecay
+    micromamba clean -a -y
+
+    if [ -d /opt/ParaChrSNP/rules/rules ]; then
+        cp -a /opt/ParaChrSNP/rules/rules/. /opt/ParaChrSNP/rules/
+        rm -rf /opt/ParaChrSNP/rules/rules
+    fi
+    if [ -d /opt/ParaChrSNP/scripts/scripts ]; then
+        cp -a /opt/ParaChrSNP/scripts/scripts/. /opt/ParaChrSNP/scripts/
+        rm -rf /opt/ParaChrSNP/scripts/scripts
+    fi
+
+    for cmd in admixture PopLDdecay; do
+        if [ -e "/opt/conda/envs/parachrsnp/bin/$cmd" ]; then
+            ln -sf "/opt/conda/envs/parachrsnp/bin/$cmd" "/usr/local/bin/$cmd"
+        fi
+    done
+
+    chmod -R a+rX /opt/ParaChrSNP
+
+%environment
+    export PATH=/opt/ParaChrSNP/bin:/opt/conda/envs/parachrsnp/bin:$PATH
+    export LD_LIBRARY_PATH=/opt/conda/envs/parachrsnp/lib:$LD_LIBRARY_PATH
+    export LC_ALL=C
+    export LANG=C
+
+%runscript
+    exec snakemake "$@"
+
+%test
+    snakemake --version
+    admixture 2>&1 | head -n 1 || true
+    PopLDdecay 2>&1 | head -n 1 || true
+    plink --version
+
+%labels
+    Author Junpeng_Ma
+    Project ParaChrSNP
+    Description ParaChrSNP container with ADMIXTURE and PopLDdecay population-genomics modules

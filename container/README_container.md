@@ -52,6 +52,7 @@ bcftools
 gatk
 picard
 fastp
+cnvnator
 beagle
 plink
 run_pipeline.pl

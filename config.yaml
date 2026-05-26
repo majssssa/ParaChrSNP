@@ -1,7 +1,7 @@
 reference: "reference/Arabidopsis_thaliana.fasta"
 
 container:
-    image: "ParaChrSNP_popgen.sif"
+    image: "ParaChrSNP.sif"
 
 samples:
     ERR16804307: "raw_fastq/ERR16804307"

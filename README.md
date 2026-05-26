@@ -4,9 +4,7 @@
   <img src="figures/ParaChrSNP_icon.png" alt="ParaChrSNP icon" width="1000">
 </p>
 
-`ParaChrSNP` is a containerized Snakemake workflow for chromosome-wise SNP calling and downstream population-genomic analysis. Starting from paired-end FASTQ files, it performs raw-read quality control, `fastp` trimming, `bwa-mem2 mem | samtools sort` alignment, duplicate removal, chromosome-wise GATK variant calling, GenomicsDB-based joint genotyping, SNP/INDEL filtering, missingness assessment, format conversion, annotation, imputation, CNV detection and several downstream analyses.
-
-The key design of ParaChrSNP is **per sample x chromosome parallel variant calling**. GATK `HaplotypeCaller` is executed independently for each sample and chromosome, followed by chromosome-level `GenomicsDBImport`, `GenotypeGVCFs` and `GatherVcfs` to produce a cohort VCF.
+raChrSNP` is a containerized Snakemake workflow for chromosome-wise SNP discovery and population-genomic analysis from paired-end resequencing data. It streamlines the full process from read quality control and alignment to cohort-level variant calling, filtering, annotation, format conversion, optional genotype imputation, CNV detection and downstream population analyses. The central design of ParaChrSNP is **per-sample by chromosome parallel variant calling**, which splits large variant-calling tasks into independent chromosome-level units and then integrates them into a cohort VCF for downstream analysis.
 
 ## Workflow
 

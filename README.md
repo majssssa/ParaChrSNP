@@ -43,7 +43,7 @@ The sample name is `{sample}`. For example, `raw_fastq/SRR001.1.fq.gz` and `raw_
 reference: "reference/Arabidopsis_thaliana.fasta"
 
 container:
-    image: "ParaChrSNP_popgen.sif"
+    image: "ParaChrSNP.sif"
 
 samples:
     ERR16804307: "raw_fastq/ERR16804307"

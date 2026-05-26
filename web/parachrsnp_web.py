@@ -57,7 +57,11 @@ STAGE_RULES = {
     "vcf_missing": ["vcf_missing"],
     "vcf_to": ["vcf_to_plink_binary", "vcf_to_plink_text", "vcf_to_hapmap"],
     "imputation": ["imputation"],
-    "cnv": ["cnvnator_call", "cnv_filter", "cnv_summary"],
+    "cnv": ["cnvnator_call", "cnv_table", "cnv_to_vcf", "cnv_summary"],
+    "pi": ["pi_window"],
+    "snp_density": ["snp_density"],
+    "admixture": ["admixture_structure"],
+    "ld_decay": ["ld_decay"],
     "vcf2pca": ["vcf2pca"],
     "vcf2dis": ["vcf2dis"],
     "snpeff": ["snpeff_prepare_database", "snpeff_build_database", "snpeff_annotate_snp", "snpeff_annotate_indel"],
@@ -66,7 +70,7 @@ STAGE_RULES = {
 
 
 INDEX_HTML = r"""<!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -92,7 +96,7 @@ INDEX_HTML = r"""<!doctype html>
       margin: 0;
       background: var(--bg);
       color: var(--text);
-      font-family: Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-family: Arial, "Noto Sans", sans-serif;
       font-size: 14px;
       line-height: 1.5;
     }
@@ -556,7 +560,7 @@ INDEX_HTML = r"""<!doctype html>
         <img src="/icon.png" alt="ParaChrSNP">
         <div>
           <h1>ParaChrSNP</h1>
-          <div class="subtitle">服务器端可视化工作流控制台</div>
+          <div class="subtitle">Server-side visual workflow console</div>
         </div>
       </div>
       <div class="status-bar">
@@ -568,97 +572,115 @@ INDEX_HTML = r"""<!doctype html>
     <main>
       <section>
         <div class="section-head">
-          <h2>输入与参数</h2>
+          <h2>Inputs And Parameters</h2>
           <span class="badge">server paths</span>
         </div>
 
-        <label>FASTQ 目录</label>
+        <label>FASTQ Directory</label>
         <div class="path-row">
           <input id="fastqDir" value="raw_fastq">
-          <button class="secondary browse-btn" onclick="openBrowser('fastqDir','dir')">浏览</button>
+          <button class="secondary browse-btn" onclick="openBrowser('fastqDir','dir')">Browse</button>
         </div>
         <div class="actions">
-          <button class="ghost" onclick="inferSamples()">识别样本</button>
+          <button class="ghost" onclick="inferSamples()">Detect Samples</button>
         </div>
 
-        <label>参考基因组 FASTA</label>
+        <label>Reference Genome FASTA</label>
         <div class="path-row">
           <input id="reference" value="reference/Arabidopsis_thaliana.fasta">
-          <button class="secondary browse-btn" onclick="openBrowser('reference','file','.fa,.fasta,.fna,.fa.gz,.fasta.gz')">浏览</button>
+          <button class="secondary browse-btn" onclick="openBrowser('reference','file','.fa,.fasta,.fna,.fa.gz,.fasta.gz')">Browse</button>
         </div>
         <div class="actions">
-          <button class="ghost" onclick="inferChromosomes()">读取染色体</button>
+          <button class="ghost" onclick="inferChromosomes()">Read Chromosomes</button>
         </div>
 
-        <label>GFF/GTF 注释文件</label>
+        <label>GFF/GTF Annotation File</label>
         <div class="path-row">
           <input id="annotationFile" value="reference/Arabidopsis_thaliana.gff">
-          <button class="secondary browse-btn" onclick="openBrowser('annotationFile','file','.gff,.gff3,.gtf,.gff.gz,.gff3.gz,.gtf.gz')">浏览</button>
+          <button class="secondary browse-btn" onclick="openBrowser('annotationFile','file','.gff,.gff3,.gtf,.gff.gz,.gff3.gz,.gtf.gz')">Browse</button>
+        </div>
+
+        <label>Population Metadata File</label>
+        <div class="path-row">
+          <input id="popInfo" value="">
+          <button class="secondary browse-btn" onclick="openBrowser('popInfo','file','.txt,.tsv,.info,.csv')">Browse</button>
         </div>
 
         <div class="row">
           <div>
-            <label>容器镜像</label>
+            <label>Container Image</label>
             <div class="path-row">
               <input id="containerImage" value="ParaChrSNP_ape_ggtree.sif">
-              <button class="secondary browse-btn" onclick="openBrowser('containerImage','file','.sif,.simg')">浏览</button>
+              <button class="secondary browse-btn" onclick="openBrowser('containerImage','file','.sif,.simg')">Browse</button>
             </div>
           </div>
           <div>
-            <label>CPU 核心数</label>
+            <label>CPU Cores</label>
             <input id="cores" type="number" min="1" value="12">
           </div>
         </div>
 
-        <label>Snakemake 命令</label>
+        <label>Snakemake Command</label>
         <input id="snakemakeCmd" value="__DEFAULT_SNAKEMAKE__">
 
-        <label>Singularity 绑定参数</label>
+        <label>Singularity Bind Arguments</label>
         <input id="singularityArgs" value="-B /home/majunpeng/sda2">
 
-        <h3>样本</h3>
-        <textarea id="samples" placeholder="每行一个样本：sample_name<TAB>fastq_prefix"></textarea>
+        <h3>Samples</h3>
+        <textarea id="samples" placeholder="One sample per line: sample_name<TAB>fastq_prefix"></textarea>
 
-        <h3>染色体</h3>
-        <textarea id="chromosomes" placeholder="每行一个染色体 ID"></textarea>
+        <h3>Chromosomes</h3>
+        <textarea id="chromosomes" placeholder="One chromosome ID per line"></textarea>
 
-        <h3>可选模块</h3>
+        <h3>Optional Modules</h3>
         <div class="checks">
           <label class="check"><input id="runPca" type="checkbox" checked> PCA</label>
-          <label class="check"><input id="runDis" type="checkbox" checked> 遗传距离/树</label>
-          <label class="check"><input id="runSnpeff" type="checkbox"> SnpEff 注释</label>
-          <label class="check"><input id="runIndelAnno" type="checkbox"> 注释 INDEL</label>
-          <label class="check"><input id="runImputation" type="checkbox"> Beagle 填充</label>
+          <label class="check"><input id="runDis" type="checkbox" checked> Genetic Distance/Tree</label>
+          <label class="check"><input id="runSnpeff" type="checkbox"> SnpEff Annotation</label>
+          <label class="check"><input id="runIndelAnno" type="checkbox"> Annotate INDELs</label>
+          <label class="check"><input id="runImputation" type="checkbox"> Beagle Imputation</label>
           <label class="check"><input id="runCnv" type="checkbox"> CNVnator CNV</label>
+          <label class="check"><input id="runPi" type="checkbox"> Pi Diversity</label>
+          <label class="check"><input id="runSnpDensity" type="checkbox"> SNP Density</label>
+          <label class="check"><input id="runAdmixture" type="checkbox"> ADMIXTURE</label>
+          <label class="check"><input id="runLdDecay" type="checkbox"> LD Decay</label>
         </div>
 
         <details class="advanced-panel" open>
-          <summary>高级参数</summary>
+          <summary>Advanced Parameters</summary>
 
-          <h3>线程数</h3>
+          <h3>Threads</h3>
           <div class="param-grid">
             <div>
-              <label>RastQC 线程数</label>
+              <label>RastQC Threads</label>
               <input id="qcThreads" type="number" min="1" value="8">
             </div>
             <div>
-              <label>fastp 线程数</label>
+              <label>fastp Threads</label>
               <input id="fastpThreads" type="number" min="1" value="8">
             </div>
             <div>
-              <label>bwa-mem2 比对线程数</label>
+              <label>bwa-mem2 Alignment Threads</label>
               <input id="bwaThreads" type="number" min="1" value="8">
             </div>
             <div>
-              <label>VCF2PCACluster 线程数</label>
+              <label>VCF2PCACluster Threads</label>
               <input id="pcaThreads" type="number" min="1" value="4">
             </div>
             <div>
-              <label>Beagle 线程数</label>
+              <label>Beagle Threads</label>
               <input id="imputationThreads" type="number" min="1" value="4">
             </div>
             <div>
-              <label>GenomicsDBImport 读取线程数</label>
+              <label>ADMIXTURE Threads</label>
+              <input id="admixtureThreads" type="number" min="1" value="4">
+            </div>
+            <div>
+              <label>LD Decay Threads</label>
+              <input id="ldDecayThreads" type="number" min="1" value="4">
+            </div>
+            <div>
+              <label>GenomicsDBImport Reader Threads</label>
               <input id="genomicsdbThreads" type="number" min="1" value="4">
             </div>
             <div>
@@ -670,88 +692,127 @@ INDEX_HTML = r"""<!doctype html>
               <input id="cnvBinSize" type="number" min="1" value="100">
             </div>
             <div>
-              <label>CNV 最小长度</label>
+              <label>Minimum CNV Length</label>
               <input id="cnvMinLen" type="number" min="1" value="1000">
             </div>
             <div>
-              <label>CNV 最大 e-value</label>
+              <label>Maximum CNV e-value</label>
               <input id="cnvMaxEvalue" value="0.01">
             </div>
             <div>
-              <label>CNV 最大 q0</label>
+              <label>Maximum CNV q0</label>
               <input id="cnvMaxQ0" value="0.5">
+            </div>
+            <div>
+              <label>Pi Window Size</label>
+              <input id="piWindowSize" type="number" min="1" value="100000">
+            </div>
+            <div>
+              <label>Pi Window Step</label>
+              <input id="piWindowStep" type="number" min="1" value="10000">
+            </div>
+            <div>
+              <label>SNP Density Window Size</label>
+              <input id="snpDensityWindowSize" type="number" min="1" value="1000000">
+            </div>
+            <div>
+              <label>LD Decay Max Distance</label>
+              <input id="ldDecayMaxDist" type="number" min="1" value="300">
+            </div>
+            <div>
+              <label>ADMIXTURE K Min</label>
+              <input id="admixtureKMin" type="number" min="1" value="1">
+            </div>
+            <div>
+              <label>ADMIXTURE K Max</label>
+              <input id="admixtureKMax" type="number" min="1" value="10">
+            </div>
+            <div>
+              <label>ADMIXTURE CV Folds</label>
+              <input id="admixtureCv" type="number" min="1" value="10">
+            </div>
+            <div>
+              <label>ADMIXTURE Prune r2</label>
+              <input id="admixturePruneR2" value="0.2">
+            </div>
+            <div>
+              <label>Show ADMIXTURE Sample Names</label>
+              <select id="admixtureShowSampleNames">
+                <option value="false" selected>No</option>
+                <option value="true">Yes</option>
+              </select>
             </div>
           </div>
 
-          <h3>Java 内存</h3>
+          <h3>Java Memory</h3>
           <div class="param-grid">
             <div>
-              <label>HaplotypeCaller 最小内存</label>
+              <label>HaplotypeCaller Minimum Memory</label>
               <input id="haploXms" value="512m">
             </div>
             <div>
-              <label>HaplotypeCaller 最大内存</label>
+              <label>HaplotypeCaller Maximum Memory</label>
               <input id="haploXmx" value="4g">
             </div>
             <div>
-              <label>GenotypeGVCFs 最小内存</label>
+              <label>GenotypeGVCFs Minimum Memory</label>
               <input id="genotypeXms" value="512m">
             </div>
             <div>
-              <label>GenotypeGVCFs 最大内存</label>
+              <label>GenotypeGVCFs Maximum Memory</label>
               <input id="genotypeXmx" value="128g">
             </div>
             <div>
-              <label>CombineGVCFs 最小内存</label>
+              <label>CombineGVCFs Minimum Memory</label>
               <input id="combineXms" value="512m">
             </div>
             <div>
-              <label>CombineGVCFs 最大内存</label>
+              <label>CombineGVCFs Maximum Memory</label>
               <input id="combineXmx" value="128g">
             </div>
             <div>
-              <label>GenomicsDBImport 最小内存</label>
+              <label>GenomicsDBImport Minimum Memory</label>
               <input id="genomicsdbXms" value="1g">
             </div>
             <div>
-              <label>GenomicsDBImport 最大内存</label>
+              <label>GenomicsDBImport Maximum Memory</label>
               <input id="genomicsdbXmx" value="16g">
             </div>
             <div>
-              <label>SnpEff 最大内存</label>
+              <label>SnpEff Maximum Memory</label>
               <input id="snpeffXmx" value="32g">
             </div>
             <div>
-              <label>Beagle 最大内存</label>
+              <label>Beagle Maximum Memory</label>
               <input id="beagleXmx" value="4g">
             </div>
           </div>
-          <p class="param-note">内存格式示例：512m、4g、128g。这里会写入本次网页运行生成的 config.yaml。</p>
+          <p class="param-note">Memory format examples: 512m, 4g, 128g. These values will be written to the config.yaml generated for this web run.</p>
         </details>
 
         <div class="actions">
           <button onclick="dryRun()">Dry-run</button>
-          <button onclick="runWorkflow()">运行流程</button>
-          <button class="danger" onclick="stopJob()">停止任务</button>
+          <button onclick="runWorkflow()">Run Workflow</button>
+          <button class="danger" onclick="stopJob()">Stop Job</button>
         </div>
-        <p class="muted">网页只选择服务器已有路径，不上传测序数据。</p>
+        <p class="muted">The web interface selects existing server-side paths only; sequencing data are not uploaded.</p>
       </section>
 
       <section class="split">
         <div>
           <div class="section-head">
-            <h2>任务进度</h2>
+            <h2>Job Progress</h2>
             <span class="badge" id="progressText">0%</span>
           </div>
           <div class="dashboard">
-            <div class="metric"><div class="value" id="sampleCount">0</div><div class="label">样本数</div></div>
-            <div class="metric"><div class="value" id="chromCount">0</div><div class="label">染色体数</div></div>
-            <div class="metric"><div class="value" id="doneJobs">0</div><div class="label">完成任务</div></div>
-            <div class="metric"><div class="value" id="totalJobs">0</div><div class="label">总任务</div></div>
+            <div class="metric"><div class="value" id="sampleCount">0</div><div class="label">Samples</div></div>
+            <div class="metric"><div class="value" id="chromCount">0</div><div class="label">Chromosomes</div></div>
+            <div class="metric"><div class="value" id="doneJobs">0</div><div class="label">Done Jobs</div></div>
+            <div class="metric"><div class="value" id="totalJobs">0</div><div class="label">Total Jobs</div></div>
           </div>
           <div class="progress-wrap">
             <div class="progress-header">
-              <strong id="stageName">等待提交</strong>
+              <strong id="stageName">Waiting For Submission</strong>
               <span class="muted" id="progressDetail">0 / 0 steps</span>
             </div>
             <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
@@ -759,26 +820,26 @@ INDEX_HTML = r"""<!doctype html>
           </div>
 
           <div class="report-actions" id="reportActions">
-            <p class="muted">报告已生成，可以直接在网页中查看。</p>
-            <button onclick="openReport()">查看报告</button>
+            <p class="muted">The report has been generated and can be opened directly in the browser.</p>
+            <button onclick="openReport()">Open Report</button>
           </div>
 
-          <label>当前任务 ID</label>
+          <label>Current Job ID</label>
           <input id="jobId" readonly>
           <input id="configPath" type="hidden">
 
-          <h3>识别样本</h3>
+          <h3>Detected Samples</h3>
           <div class="table-wrap">
             <table id="sampleTable">
-              <thead><tr><th>样本</th><th>FASTQ 前缀</th></tr></thead>
+              <thead><tr><th>Sample</th><th>FASTQ Prefix</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
         </div>
         <div>
           <details>
-            <summary>查看 Snakemake 原始日志</summary>
-            <pre id="log" class="log">等待提交任务。</pre>
+            <summary>View Raw Snakemake Log</summary>
+            <pre id="log" class="log">Waiting for job submission.</pre>
           </details>
         </div>
       </section>
@@ -788,19 +849,19 @@ INDEX_HTML = r"""<!doctype html>
   <div class="modal" id="browserModal">
     <div class="browser">
       <div class="browser-head">
-        <h2 id="browserTitle">选择路径</h2>
-        <button class="ghost" onclick="closeBrowser()">关闭</button>
+        <h2 id="browserTitle">Select Path</h2>
+        <button class="ghost" onclick="closeBrowser()">Close</button>
       </div>
       <div class="browser-path">
         <input id="browserPath">
-        <button class="secondary" onclick="loadBrowser(document.getElementById('browserPath').value)">打开</button>
+        <button class="secondary" onclick="loadBrowser(document.getElementById('browserPath').value)">Open</button>
       </div>
       <div class="browser-list" id="browserList"></div>
       <div class="browser-foot">
-        <span class="muted" id="browserHint">选择服务器端文件或目录</span>
+        <span class="muted" id="browserHint">Select a server-side file or directory</span>
         <div class="actions" style="margin:0">
-          <button class="secondary" onclick="selectCurrentDirectory()">使用当前目录</button>
-          <button onclick="confirmSelection()">确认选择</button>
+          <button class="secondary" onclick="selectCurrentDirectory()">Use Current Directory</button>
+          <button onclick="confirmSelection()">Confirm Selection</button>
         </div>
       </div>
     </div>
@@ -815,22 +876,26 @@ INDEX_HTML = r"""<!doctype html>
     let browserSelected = "";
     let browserCurrent = "";
     const stages = [
-      ["precheck", "运行前检查"],
-      ["qc", "原始质控"],
-      ["clean_reads", "数据清洗"],
-      ["bwa_mem", "序列比对"],
-      ["bam_rmdup", "去重复"],
-      ["haplo", "染色体 calling"],
-      ["joint_calling", "联合分型"],
-      ["snp_filter", "变异过滤"],
-      ["vcf_missing", "缺失率统计"],
-      ["vcf_to", "格式转换"],
-      ["imputation", "基因型填充"],
-      ["cnv", "CNV 检测"],
+      ["precheck", "Precheck"],
+      ["qc", "Raw-read QC"],
+      ["clean_reads", "Read Trimming"],
+      ["bwa_mem", "Alignment"],
+      ["bam_rmdup", "Duplicate Removal"],
+      ["haplo", "Chromosome Calling"],
+      ["joint_calling", "Joint Genotyping"],
+      ["snp_filter", "Variant Filtering"],
+      ["vcf_missing", "Missingness QC"],
+      ["vcf_to", "Format Conversion"],
+      ["imputation", "Genotype Imputation"],
+      ["cnv", "CNV Detection"],
+      ["pi", "Pi Diversity"],
+      ["snp_density", "SNP Density"],
+      ["admixture", "ADMIXTURE"],
+      ["ld_decay", "LD Decay"],
       ["vcf2pca", "PCA"],
-      ["vcf2dis", "遗传距离"],
-      ["snpeff", "功能注释"],
-      ["report", "报告生成"]
+      ["vcf2dis", "Genetic Distance"],
+      ["snpeff", "Functional Annotation"],
+      ["report", "Report Generation"]
     ];
 
     async function api(path, options = {}) {
@@ -871,6 +936,7 @@ INDEX_HTML = r"""<!doctype html>
         fastq_dir: document.getElementById("fastqDir").value.trim(),
         reference: document.getElementById("reference").value.trim(),
         annotation_file: document.getElementById("annotationFile").value.trim(),
+        pop_info: document.getElementById("popInfo").value.trim(),
         container_image: document.getElementById("containerImage").value.trim(),
         snakemake_cmd: document.getElementById("snakemakeCmd").value.trim(),
         cores: Number(document.getElementById("cores").value || 1),
@@ -883,7 +949,11 @@ INDEX_HTML = r"""<!doctype html>
           snpeff: document.getElementById("runSnpeff").checked,
           snpeff_indel: document.getElementById("runIndelAnno").checked,
           imputation: document.getElementById("runImputation").checked,
-          cnv: document.getElementById("runCnv").checked
+          cnv: document.getElementById("runCnv").checked,
+          pi: document.getElementById("runPi").checked,
+          snp_density: document.getElementById("runSnpDensity").checked,
+          admixture: document.getElementById("runAdmixture").checked,
+          ld_decay: document.getElementById("runLdDecay").checked
         },
         advanced: {
           threads: {
@@ -892,10 +962,19 @@ INDEX_HTML = r"""<!doctype html>
             bwa: numberValue("bwaThreads", 8),
             pca: numberValue("pcaThreads", 4),
             imputation: numberValue("imputationThreads", 4),
+            admixture: numberValue("admixtureThreads", 4),
+            ld_decay: numberValue("ldDecayThreads", 4),
             genomicsdb: numberValue("genomicsdbThreads", 4),
             genomicsdb_batch_size: numberValue("genomicsdbBatchSize", 50),
             cnv_bin_size: numberValue("cnvBinSize", 100),
-            cnv_min_len: numberValue("cnvMinLen", 1000)
+            cnv_min_len: numberValue("cnvMinLen", 1000),
+            pi_window_size: numberValue("piWindowSize", 100000),
+            pi_window_step: numberValue("piWindowStep", 10000),
+            snp_density_window_size: numberValue("snpDensityWindowSize", 1000000),
+            ld_decay_max_dist: numberValue("ldDecayMaxDist", 300),
+            admixture_k_min: numberValue("admixtureKMin", 1),
+            admixture_k_max: numberValue("admixtureKMax", 10),
+            admixture_cv: numberValue("admixtureCv", 10)
           },
           memory: {
             haplo_xms: textValue("haploXms", "512m"),
@@ -912,6 +991,10 @@ INDEX_HTML = r"""<!doctype html>
           cnv: {
             max_evalue: textValue("cnvMaxEvalue", "0.01"),
             max_q0: textValue("cnvMaxQ0", "0.5")
+          },
+          admixture: {
+            prune_r2: textValue("admixturePruneR2", "0.2"),
+            show_sample_names: document.getElementById("admixtureShowSampleNames").value === "true"
           }
         },
         dry_run: dryRunMode
@@ -969,7 +1052,7 @@ INDEX_HTML = r"""<!doctype html>
         document.getElementById("jobId").value = data.job_id;
         document.getElementById("configPath").value = data.config_path;
         document.getElementById("jobStatus").textContent = `job: ${data.status}`;
-        setProgress({percent: 0, done: 0, total: 0, current_rule: "queued", message: "任务已提交", stages: {}});
+        setProgress({percent: 0, done: 0, total: 0, current_rule: "queued", message: "Job Submitted", stages: {}});
         poll();
         if (timer) clearInterval(timer);
         timer = setInterval(poll, 2500);
@@ -1007,7 +1090,7 @@ INDEX_HTML = r"""<!doctype html>
       document.getElementById("doneJobs").textContent = progress.done || 0;
       document.getElementById("totalJobs").textContent = progress.total || 0;
       document.getElementById("progressDetail").textContent = `${progress.done || 0} / ${progress.total || 0} steps`;
-      document.getElementById("stageName").textContent = progress.message || progress.current_rule || "等待提交";
+      document.getElementById("stageName").textContent = progress.message || progress.current_rule || "Waiting For Submission";
       renderStages(progress.stages || {}, progress.current_rule || "");
     }
 
@@ -1020,9 +1103,9 @@ INDEX_HTML = r"""<!doctype html>
     }
 
     function stageLabel(state) {
-      if (state === "completed") return "已完成";
-      if (state === "running") return "正在运行";
-      return "待运行";
+      if (state === "completed") return "Completed";
+      if (state === "running") return "Running";
+      return "Pending";
     }
 
     function renderStages(stageStates, currentRule) {
@@ -1044,8 +1127,8 @@ INDEX_HTML = r"""<!doctype html>
       browserExt = ext;
       browserSelected = "";
       const currentValue = document.getElementById(target).value.trim();
-      document.getElementById("browserTitle").textContent = mode === "dir" ? "选择目录" : "选择文件";
-      document.getElementById("browserHint").textContent = mode === "dir" ? "双击目录进入，确认后使用当前目录或选中的目录。" : "双击目录进入，选择文件后确认。";
+      document.getElementById("browserTitle").textContent = mode === "dir" ? "Select Directory" : "Select File";
+      document.getElementById("browserHint").textContent = mode === "dir" ? "Double-click a directory to enter it, then confirm the current or selected directory." : "Double-click a directory to enter it, select a file, then confirm.";
       document.getElementById("browserModal").classList.add("open");
       await loadBrowser(currentValue || "");
     }
@@ -1143,7 +1226,7 @@ INDEX_HTML = r"""<!doctype html>
 
 
 def parse_args():
-    """解析命令行参数，并提供英文帮助文档。"""
+    """Parse command-line arguments and provide English help text."""
     parser = argparse.ArgumentParser(
         description="Launch a lightweight web interface for the ParaChrSNP Snakemake workflow.",
         epilog=f"Author: {AUTHOR}",
@@ -1169,7 +1252,7 @@ def parse_args():
 
 
 def write_script_log():
-    """把脚本信息记录到用户指定的脚本日志中。"""
+    """Record this script in the user-level script log."""
     log_path = Path("/home/majunpeng/script_log.txt")
     line = (
         f"{time.strftime('%Y-%m-%d %H:%M:%S')}\t{SCRIPT_NAME}\t"
@@ -1180,7 +1263,7 @@ def write_script_log():
 
 
 def allowed_roots(extra_roots=None):
-    """返回允许网页访问的服务器端目录。"""
+    """Return server-side directories that the web browser is allowed to access."""
     roots = list(DEFAULT_ALLOWED_ROOTS)
     env_roots = os.environ.get("PARACHRSNP_ALLOWED_ROOTS", "")
     for item in env_roots.split(":"):
@@ -1199,7 +1282,7 @@ def allowed_roots(extra_roots=None):
 
 
 def resolve_allowed(path_text, roots):
-    """解析用户提供的路径，并限制其必须位于允许访问的目录下。"""
+    """Resolve a user-provided path and ensure it is under an allowed root."""
     path = Path(path_text).expanduser()
     if not path.is_absolute():
         path = PROJECT_ROOT / path
@@ -1211,7 +1294,7 @@ def resolve_allowed(path_text, roots):
 
 
 def is_allowed_path(path, roots):
-    """判断路径是否位于允许访问的目录中。"""
+    """Return whether a path is under any allowed root."""
     try:
         resolved = Path(path).resolve()
     except OSError:
@@ -1223,7 +1306,7 @@ def is_allowed_path(path, roots):
 
 
 def format_size(size):
-    """把文件大小转换为便于网页显示的字符串。"""
+    """Format a file size for display in the web interface."""
     value = float(size)
     for unit in ["B", "KB", "MB", "GB", "TB"]:
         if value < 1024 or unit == "TB":
@@ -1235,7 +1318,7 @@ def format_size(size):
 
 
 def matches_extension(path, ext_text):
-    """根据扩展名过滤文件浏览器中展示的文件。"""
+    """Filter file-browser entries by extension."""
     if not ext_text:
         return True
     name = path.name.lower()
@@ -1244,7 +1327,7 @@ def matches_extension(path, ext_text):
 
 
 def browse_path(path_text, roots, mode="file", ext_text=""):
-    """列出允许目录中的文件和子目录，供网页文件浏览器使用。"""
+    """List files and directories under allowed roots for the web file browser."""
     if not path_text:
         entries = []
         for root in roots:
@@ -1307,7 +1390,7 @@ def browse_path(path_text, roots, mode="file", ext_text=""):
 
 
 def stage_for_rule(rule_name):
-    """根据 rule 名称判断它属于哪个流程阶段。"""
+    """Map a Snakemake rule name to a workflow stage."""
     for stage, rule_names in STAGE_RULES.items():
         if rule_name in rule_names:
             return stage
@@ -1315,7 +1398,7 @@ def stage_for_rule(rule_name):
 
 
 def parse_rule_jobs(log_text):
-    """从 Snakemake 日志中解析 jobid 与 rule 的对应关系。"""
+    """Parse job IDs and rule names from Snakemake logs."""
     jobs = {}
     pattern = re.compile(
         r"(?m)^(?:localrule|rule)\s+([A-Za-z0-9_]+):(?P<body>.*?)(?=^\[|\Z)",
@@ -1330,7 +1413,7 @@ def parse_rule_jobs(log_text):
 
 
 def parse_job_stats_rules(log_text):
-    """从 Job stats 表格中解析本次 DAG 计划运行的 rule。"""
+    """Parse planned rules from the Snakemake Job stats table."""
     rules = set()
     in_stats = False
     for line in log_text.splitlines():
@@ -1353,7 +1436,7 @@ def parse_job_stats_rules(log_text):
 
 
 def parse_stage_states(log_text, status):
-    """根据 Snakemake 日志为每个流程阶段生成 pending/running/completed 状态。"""
+    """Build pending/running/completed stage states from Snakemake logs."""
     stage_states = {stage: "pending" for stage in STAGE_RULES}
     if not log_text:
         return stage_states
@@ -1385,18 +1468,18 @@ def parse_stage_states(log_text, status):
 
 
 def parse_progress(log_text, status):
-    """从 Snakemake 日志中提取粗略进度信息。"""
+    """Extract coarse progress information from Snakemake logs."""
     progress = {
         "done": 0,
         "total": 0,
         "percent": 0,
         "current_rule": "",
-        "message": "等待提交",
+        "message": "Waiting For Submission",
         "stages": parse_stage_states(log_text, status),
     }
     if not log_text:
         if status == "running":
-            progress["message"] = "任务启动中"
+            progress["message"] = "Starting Job"
         return progress
 
     step_matches = re.findall(r"(\d+)\s+of\s+(\d+)\s+steps\s+\(\d+%\)\s+done", log_text)
@@ -1417,42 +1500,42 @@ def parse_progress(log_text, status):
     rule_matches = re.findall(r"rule\s+([A-Za-z0-9_]+):", log_text)
     if rule_matches:
         progress["current_rule"] = rule_matches[-1]
-        progress["message"] = f"当前步骤：{rule_matches[-1]}"
+        progress["message"] = f"Current Step: {rule_matches[-1]}"
 
     if "Building DAG of jobs" in log_text and not progress["current_rule"]:
-        progress["message"] = "正在构建任务 DAG"
+        progress["message"] = "Building Job DAG"
     if "Nothing to be done" in log_text:
-        progress.update({"done": 1, "total": 1, "percent": 100, "message": "没有需要运行的任务"})
+        progress.update({"done": 1, "total": 1, "percent": 100, "message": "Nothing To Run"})
     if "WorkflowError:" in log_text:
         workflow_error = log_text.split("WorkflowError:", 1)[1].strip().splitlines()
         if workflow_error:
-            progress["message"] = f"Snakemake 错误：{workflow_error[0].strip()}"
+            progress["message"] = f"Snakemake Error: {workflow_error[0].strip()}"
     if status == "success":
         if progress["total"] > 0:
             progress["done"] = progress["total"]
         progress["percent"] = 100
-        progress["message"] = "Dry-run 完成" if "This was a dry-run" in log_text else "任务完成"
+        progress["message"] = "Dry-run Completed" if "This was a dry-run" in log_text else "Job Completed"
     elif status == "failed":
-        if progress["message"].startswith("Snakemake 错误"):
+        if progress["message"].startswith("Snakemake Error"):
             pass
         else:
-            progress["message"] = "任务失败"
+            progress["message"] = "Job Failed"
     elif status == "stopped":
-        progress["message"] = "任务已停止"
+        progress["message"] = "Job Stopped"
     elif status == "queued":
-        progress["message"] = "任务排队中"
+        progress["message"] = "Job Queued"
     return progress
 
 
 def read_json_body(handler):
-    """读取 HTTP POST 请求中的 JSON 数据。"""
+    """Read JSON data from an HTTP POST request."""
     length = int(handler.headers.get("Content-Length", "0"))
     raw = handler.rfile.read(length).decode("utf-8")
     return json.loads(raw or "{}")
 
 
 def send_json(handler, data, status=200):
-    """返回 JSON 响应。"""
+    """Send a JSON response."""
     body = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
     handler.send_response(status)
     handler.send_header("Content-Type", "application/json; charset=utf-8")
@@ -1462,7 +1545,7 @@ def send_json(handler, data, status=200):
 
 
 def send_text(handler, text, content_type="text/html; charset=utf-8"):
-    """返回文本响应。"""
+    """Send a text response."""
     body = text.encode("utf-8")
     handler.send_response(200)
     handler.send_header("Content-Type", content_type)
@@ -1472,7 +1555,7 @@ def send_text(handler, text, content_type="text/html; charset=utf-8"):
 
 
 def send_file(handler, path, content_type=None):
-    """返回项目目录中的只读静态文件。"""
+    """Send a read-only static file from the project directory."""
     body = path.read_bytes()
     guessed_type = content_type or mimetypes.guess_type(str(path))[0] or "application/octet-stream"
     handler.send_response(200)
@@ -1483,7 +1566,7 @@ def send_file(handler, path, content_type=None):
 
 
 def infer_samples(fastq_dir):
-    """从 FASTQ 目录中识别 {sample}.1.fq.gz 和 {sample}.2.fq.gz 样本配对。"""
+    """Infer paired samples named {sample}.1.fq.gz and {sample}.2.fq.gz."""
     samples = {}
     pattern = re.compile(r"(.+)\.1\.(?:f(?:ast)?q)\.gz$")
     for path in sorted(fastq_dir.iterdir()):
@@ -1499,7 +1582,7 @@ def infer_samples(fastq_dir):
 
 
 def read_chromosomes(reference):
-    """读取 FASTA header 中的序列 ID，作为染色体列表。"""
+    """Read FASTA header sequence IDs as chromosome names."""
     opener = gzip.open if reference.suffix == ".gz" else open
     chromosomes = []
     with opener(reference, "rt", encoding="utf-8", errors="replace") as handle:
@@ -1510,7 +1593,7 @@ def read_chromosomes(reference):
 
 
 def int_param(value, default, minimum=1):
-    """把网页提交的线程数转换为正整数，非法值回退到默认值。"""
+    """Convert a submitted numeric parameter to a positive integer."""
     try:
         parsed = int(value)
     except (TypeError, ValueError):
@@ -1521,7 +1604,7 @@ def int_param(value, default, minimum=1):
 
 
 def text_param(value, default):
-    """读取网页文本参数，空值回退到默认值。"""
+    """Read a submitted text parameter and fall back to the default if empty."""
     if value is None:
         return default
     value = str(value).strip()
@@ -1529,12 +1612,12 @@ def text_param(value, default):
 
 
 def gatk_java_options(xms, xmx):
-    """生成 GATK 命令需要的 --java-options 参数。"""
+    """Build the --java-options argument used by GATK commands."""
     return f'--java-options "-Xms{xms} -Xmx{xmx}"'
 
 
 def xmx_option(value, default):
-    """生成普通 Java 程序使用的 -Xmx 参数，兼容用户直接填写 -Xmx4g。"""
+    """Build a standard -Xmx argument and accept values already starting with -Xmx."""
     value = text_param(value, default)
     if value.startswith("-Xmx"):
         return value
@@ -1542,7 +1625,7 @@ def xmx_option(value, default):
 
 
 def base_config(payload):
-    """根据网页提交参数生成 ParaChrSNP 的 config.yaml 内容。"""
+    """Generate ParaChrSNP config.yaml content from submitted web parameters."""
     reference = payload["reference"]
     annotation_file = payload.get("annotation_file", "")
     container_image = payload.get("container_image", "ParaChrSNP.sif")
@@ -1551,16 +1634,29 @@ def base_config(payload):
     thread_cfg = advanced.get("threads", {})
     memory_cfg = advanced.get("memory", {})
     cnv_cfg = advanced.get("cnv", {})
+    admixture_cfg = advanced.get("admixture", {})
+    pop_info = payload.get("pop_info", "")
 
     qc_threads = int_param(thread_cfg.get("qc"), 8)
     fastp_threads = int_param(thread_cfg.get("fastp"), 8)
     bwa_threads = int_param(thread_cfg.get("bwa"), 8)
     pca_threads = int_param(thread_cfg.get("pca"), 4)
     imputation_threads = int_param(thread_cfg.get("imputation"), 4)
+    admixture_threads = int_param(thread_cfg.get("admixture"), 4)
+    ld_decay_threads = int_param(thread_cfg.get("ld_decay"), 4)
     genomicsdb_threads = int_param(thread_cfg.get("genomicsdb"), 4)
     genomicsdb_batch_size = int_param(thread_cfg.get("genomicsdb_batch_size"), 50)
     cnv_bin_size = int_param(thread_cfg.get("cnv_bin_size"), 100)
     cnv_min_len = int_param(thread_cfg.get("cnv_min_len"), 1000)
+    pi_window_size = int_param(thread_cfg.get("pi_window_size"), 100000)
+    pi_window_step = int_param(thread_cfg.get("pi_window_step"), 10000)
+    snp_density_window_size = int_param(thread_cfg.get("snp_density_window_size"), 1000000)
+    ld_decay_max_dist = int_param(thread_cfg.get("ld_decay_max_dist"), 300)
+    admixture_k_min = int_param(thread_cfg.get("admixture_k_min"), 1)
+    admixture_k_max = int_param(thread_cfg.get("admixture_k_max"), 10)
+    if admixture_k_max < admixture_k_min:
+        admixture_k_max = admixture_k_min
+    admixture_cv = int_param(thread_cfg.get("admixture_cv"), 10)
 
     haplo_java = gatk_java_options(
         text_param(memory_cfg.get("haplo_xms"), "512m"),
@@ -1651,11 +1747,57 @@ def base_config(payload):
                 "enabled": bool(modules.get("cnv", False)),
                 "software": "cnvnator",
                 "executable": "cnvnator",
+                "vcf_converter": "cnvnator2VCF.pl",
                 "bin_size": cnv_bin_size,
                 "reference_dir": str(Path(reference).parent) if str(Path(reference).parent) != "." else ".",
                 "min_len": cnv_min_len,
                 "max_evalue": text_param(cnv_cfg.get("max_evalue"), "0.01"),
                 "max_q0": text_param(cnv_cfg.get("max_q0"), "0.5"),
+                "extra": "",
+            },
+            "pi": {
+                "enabled": bool(modules.get("pi", False)),
+                "input_vcf": "result_vcfs/combined.snp.filtered.vcf.gz",
+                "pop_info": pop_info,
+                "output_dir": "pi",
+                "window_size": pi_window_size,
+                "window_step": pi_window_step,
+                "extra": "",
+            },
+            "snp_density": {
+                "enabled": bool(modules.get("snp_density", False)),
+                "input_vcf": "result_vcfs/combined.snp.filtered.vcf.gz",
+                "output_dir": "snp_density",
+                "window_size": snp_density_window_size,
+            },
+            "admixture": {
+                "enabled": bool(modules.get("admixture", False)),
+                "input_prefix": "format_convert/combined.snp.filtered",
+                "output_dir": "admixture",
+                "executable": "admixture",
+                "k_min": admixture_k_min,
+                "k_max": admixture_k_max,
+                "cv": admixture_cv,
+                "threads": admixture_threads,
+                "prune_window": 50,
+                "prune_step": 10,
+                "prune_r2": text_param(admixture_cfg.get("prune_r2"), "0.2"),
+                "geno": 0.999,
+                "pop_info": pop_info,
+                "show_sample_names": bool(admixture_cfg.get("show_sample_names", False)),
+                "plink_extra": "--allow-extra-chr",
+                "normalize_extra": "--allow-extra-chr --set-missing-var-ids @:#",
+                "admixture_plink_extra": "--allow-extra-chr 0",
+                "extra": "",
+            },
+            "ld_decay": {
+                "enabled": bool(modules.get("ld_decay", False)),
+                "input_vcf": "result_vcfs/combined.snp.filtered.vcf.gz",
+                "pop_info": pop_info,
+                "output_dir": "ld_decay",
+                "executable": "PopLDdecay",
+                "max_dist": ld_decay_max_dist,
+                "threads": ld_decay_threads,
                 "extra": "",
             },
             "vcf2pca": {
@@ -1698,7 +1840,7 @@ def base_config(payload):
 
 
 def write_config(payload, job_dir):
-    """写出本次任务使用的 config.yaml。"""
+    """Write the config.yaml used by the submitted job."""
     if yaml is None:
         raise RuntimeError("PyYAML is required to write config.yaml.")
     config = base_config(payload)
@@ -1709,7 +1851,7 @@ def write_config(payload, job_dir):
 
 
 def run_process(job_id, command, log_path):
-    """在后台运行 Snakemake，并实时记录任务状态。"""
+    """Run Snakemake in the background and update job status."""
     env = os.environ.copy()
     wrapper_dir = PROJECT_ROOT / "web" / "bin"
     if wrapper_dir.is_dir():
@@ -1750,12 +1892,12 @@ def run_process(job_id, command, log_path):
 
 
 class ParaChrSNPHandler(BaseHTTPRequestHandler):
-    """处理 ParaChrSNP Web Launcher 的 HTTP 请求。"""
+    """Handle HTTP requests for the ParaChrSNP Web Launcher."""
 
     server_version = "ParaChrSNPWeb/0.1"
 
     def do_GET(self):
-        """处理网页和 API GET 请求。"""
+        """Handle web page and API GET requests."""
         try:
             parsed = urlparse(self.path)
             if parsed.path == "/":
@@ -1854,7 +1996,7 @@ class ParaChrSNPHandler(BaseHTTPRequestHandler):
             send_json(self, {"error": str(exc)}, status=400)
 
     def do_POST(self):
-        """处理任务提交和停止请求。"""
+        """Handle job submission and stop requests."""
         try:
             parsed = urlparse(self.path)
             if parsed.path == "/api/run":
@@ -1918,7 +2060,7 @@ class ParaChrSNPHandler(BaseHTTPRequestHandler):
             send_json(self, {"error": str(exc)}, status=400)
 
     def validate_payload(self, payload):
-        """检查网页提交的关键路径和参数是否可用。"""
+        """Validate key paths and parameters submitted by the web interface."""
         resolve_allowed(payload.get("reference", ""), self.server.allowed_roots)
         fastq_dir = resolve_allowed(payload.get("fastq_dir", ""), self.server.allowed_roots)
         if not fastq_dir.is_dir():
@@ -1926,6 +2068,9 @@ class ParaChrSNPHandler(BaseHTTPRequestHandler):
         annotation_file = payload.get("annotation_file", "").strip()
         if annotation_file:
             resolve_allowed(annotation_file, self.server.allowed_roots)
+        pop_info = payload.get("pop_info", "").strip()
+        if pop_info:
+            resolve_allowed(pop_info, self.server.allowed_roots)
         samples = payload.get("samples", {})
         if not samples:
             raise ValueError("No samples were provided.")
@@ -1937,13 +2082,13 @@ class ParaChrSNPHandler(BaseHTTPRequestHandler):
             raise ValueError("cores must be >= 1.")
 
     def log_message(self, format_text, *args):
-        """减少终端 HTTP 访问日志噪音。"""
+        """Reduce terminal noise from HTTP access logs."""
         safe_message = html.escape(format_text % args)
         print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {self.address_string()} {safe_message}")
 
 
 def main():
-    """启动 ParaChrSNP 网页服务。"""
+    """Start the ParaChrSNP web service."""
     args = parse_args()
     RUN_ROOT.mkdir(parents=True, exist_ok=True)
     try:

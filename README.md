@@ -331,6 +331,10 @@ Open the web page in a browser.
 http://SERVER_IP:8088
 ```
 
+<p align="center">
+  <img src="figures/web.png" alt="ParaChrSNP web" width="1000">
+</p>
+
 Each submitted job writes its generated configuration and logs to `web_runs/`. This is a runtime directory and is ignored by Git by default.
 
 The web interface currently supports:

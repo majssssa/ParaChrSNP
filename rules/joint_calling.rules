@@ -8,10 +8,15 @@ if JOINT_CALLING_METHOD == "combine_gvcfs":
             vcf="result_vcfs/combined.vcf.gz"
         log:
             "logs/gatk/genotypegvcfs.log"
+        threads:
+            int(JOINT_CALLING_CONFIG.get("genotype_threads", 1))
         params:
-            java_options=config["params"]["genotype_gvcfs"]["java_options"]
+            java_options=lambda wildcards, threads: java_options_with_active_processors(
+                config["params"]["genotype_gvcfs"]["java_options"],
+                threads
+            )
         shell:
-            "gatk GenotypeGVCFs {params.java_options} -R {input.ref} -V {input.gvcf} -O {output.vcf} 2> {log}"
+            "gatk {params.java_options} GenotypeGVCFs -R {input.ref} -V {input.gvcf} -O {output.vcf} 2> {log}"
 
 elif JOINT_CALLING_METHOD == "genomicsdb":
 
@@ -22,10 +27,15 @@ elif JOINT_CALLING_METHOD == "genomicsdb":
             vcf="result_vcfs/combined.vcf.gz"
         log:
             "logs/gatk/gather_genotyped_chroms.log"
+        threads:
+            int(JOINT_CALLING_CONFIG.get("gather_threads", 1))
         params:
-            java_options=JOINT_CALLING_CONFIG.get(
-                "gather_java_options",
-                config["params"]["combine_vcf"]["java_options"],
+            java_options=lambda wildcards, threads: java_options_with_active_processors(
+                JOINT_CALLING_CONFIG.get(
+                    "gather_java_options",
+                    config["params"]["combine_vcf"]["java_options"],
+                ),
+                threads
             ),
             inputs=lambda wildcards, input: " ".join(f"-I {vcf}" for vcf in input.vcfs)
         shell:

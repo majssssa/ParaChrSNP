@@ -7,5 +7,12 @@ rule bam_rmdup:
         matrix="duplicate_removed/{sample}.dup.txt"
     log:
         "logs/rmdup/{sample}.log"
+    threads:
+        int(config["params"].get("mark_duplicates", {}).get("threads", 1))
+    params:
+        java_options=lambda wildcards, threads: java_options_with_active_processors(
+            config["params"].get("mark_duplicates", {}).get("java_options", "--java-options \"-Xmx10g\""),
+            threads
+        )
     shell:
-        "gatk --java-options \"-Xmx10g\" MarkDuplicates -I {input.bam} -O {output.bam} -M {output.matrix} --REMOVE_DUPLICATES true > {log} 2>&1"
+        "gatk {params.java_options} MarkDuplicates -I {input.bam} -O {output.bam} -M {output.matrix} --REMOVE_DUPLICATES true > {log} 2>&1"

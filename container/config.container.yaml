@@ -165,17 +165,25 @@ params:
 
     bwa:
         bwa_threads: 16
+        sort_threads: 4
 
     fastp:
         fastp_threads: 16
 
     haplotype_caller:
+        threads: 1
+        native_pair_hmm_threads: 1
         java_options: "--java-options \"-Xms512m -Xmx4g\""
+
+    mark_duplicates:
+        threads: 1
+        java_options: "--java-options \"-Xmx10g\""
 
     genotype_gvcfs:
         java_options: "--java-options \"-Xms512m -Xmx4g\""
 
     combine_vcf:
+        threads: 1
         java_options: "--java-options \"-Xms512m -Xmx4g\""
 
     snp_filter:
@@ -201,14 +209,17 @@ params:
         output_prefix: "missing/combined.snp.filtered"
         plot_prefix: "missing/combined.snp.filtered.miss_check"
         plot_script: "scripts/plink-missing.py"
+        threads: 4
         extra: "--allow-extra-chr"
 
     vcf_convert:
         input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
         output_prefix: "format_convert/combined.snp.filtered"
         plink_extra: "--allow-extra-chr"
+        plink_threads: 4
         tassel_executable: "run_pipeline.pl"
         tassel_memory: "-Xmx10g"
+        tassel_threads: 4
         tassel_extra: ""
 
     vcf2pca:

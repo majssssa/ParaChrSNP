@@ -22,7 +22,7 @@ if config["params"].get("ld_decay", {}).get("enabled", False):
             max_dist=LD_DECAY_CFG.get("max_dist", 300),
             extra=LD_DECAY_CFG.get("extra", "")
         threads:
-            int(LD_DECAY_CFG.get("threads", 4))
+            int(LD_DECAY_CFG.get("threads", 1))
         log:
             "logs/ld_decay/ld_decay.log"
         shell:

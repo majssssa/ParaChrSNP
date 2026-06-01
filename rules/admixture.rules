@@ -57,6 +57,7 @@ if config["params"].get("admixture", {}).get("enabled", False):
                 --bfile {params.input_prefix} \
                 {params.normalize_extra} \
                 --geno {params.geno} \
+                --threads {threads} \
                 --make-bed \
                 --out {params.normalized_prefix} \
                 > {log} 2>&1
@@ -64,6 +65,7 @@ if config["params"].get("admixture", {}).get("enabled", False):
             plink \
                 --bfile {params.normalized_prefix} \
                 {params.plink_extra} \
+                --threads {threads} \
                 --indep-pairwise {params.prune_window} {params.prune_step} {params.prune_r2} \
                 --out {params.output_dir}/pruned/prune \
                 >> {log} 2>&1
@@ -72,6 +74,7 @@ if config["params"].get("admixture", {}).get("enabled", False):
                 --bfile {params.normalized_prefix} \
                 {params.plink_extra} \
                 --extract {params.output_dir}/pruned/prune.prune.in \
+                --threads {threads} \
                 --make-bed \
                 --out {params.pruned_raw_prefix} \
                 >> {log} 2>&1
@@ -79,6 +82,7 @@ if config["params"].get("admixture", {}).get("enabled", False):
             plink \
                 --bfile {params.pruned_raw_prefix} \
                 {params.admixture_plink_extra} \
+                --threads {threads} \
                 --make-bed \
                 --out {params.output_dir}/pruned/admixture_pruned \
                 >> {log} 2>&1

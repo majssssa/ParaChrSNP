@@ -46,7 +46,7 @@ rule imputation:
             exit 1
         fi
 
-        java {params.java_options} \
+        java -XX:ActiveProcessorCount={threads} {params.java_options} \
             -jar "$BEAGLE_JAR" \
             gt={input.vcf} \
             out={params.output_prefix} \

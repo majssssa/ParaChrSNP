@@ -12,6 +12,8 @@ rule vcf_missing:
         output_prefix=config["params"]["vcf_missing"]["output_prefix"],
         plot_prefix=config["params"]["vcf_missing"]["plot_prefix"],
         extra=config["params"]["vcf_missing"].get("extra", "--allow-extra-chr")
+    threads:
+        int(config["params"]["vcf_missing"].get("threads", config["params"]["vcf_convert"].get("plink_threads", 4)))
     log:
         "logs/vcf_missing/vcf_missing.log"
     shell:
@@ -21,6 +23,7 @@ rule vcf_missing:
         plink \
             --vcf {input.vcf} \
             {params.extra} \
+            --threads {threads} \
             --missing \
             --out {params.output_prefix} \
             > {log} 2>&1

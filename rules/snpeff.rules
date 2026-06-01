@@ -69,10 +69,16 @@ rule snpeff_build_database:
         genome_name=config["params"]["snpeff"]["genome_name"],
         data_dir=config["params"]["snpeff"]["data_dir"],
         data_dir_abs=lambda wildcards: os.path.abspath(config["params"]["snpeff"]["data_dir"]),
+        java_options=lambda wildcards, threads: java_options_with_active_processors(
+            config["params"]["snpeff"].get("java_options", ""),
+            threads
+        ),
         check_options=config["params"]["snpeff"].get("build_check_options", "-noCheckCds -noCheckProtein"),
         annotation_format=config["params"]["snpeff"].get("annotation_format", "gff3")
     log:
         "logs/snpeff/build_database.log"
+    threads:
+        int(config["params"]["snpeff"].get("threads", 1))
     shell:
         """
         mkdir -p $(dirname {output.done}) logs/snpeff
@@ -87,7 +93,7 @@ rule snpeff_build_database:
             exit 1
         fi
 
-        {params.executable} build \
+        {params.executable} {params.java_options} build \
             -c {input.config_file} \
             -dataDir {params.data_dir_abs} \
             $build_flag \
@@ -115,8 +121,13 @@ rule snpeff_annotate_snp:
         genome_name=config["params"]["snpeff"]["genome_name"],
         data_dir=config["params"]["snpeff"]["data_dir"],
         data_dir_abs=lambda wildcards: os.path.abspath(config["params"]["snpeff"]["data_dir"]),
-        java_options=config["params"]["snpeff"].get("java_options", ""),
+        java_options=lambda wildcards, threads: java_options_with_active_processors(
+            config["params"]["snpeff"].get("java_options", ""),
+            threads
+        ),
         extra=config["params"]["snpeff"].get("extra", "")
+    threads:
+        int(config["params"]["snpeff"].get("threads", 1))
     log:
         "logs/snpeff/annotate_snp.log"
     shell:
@@ -156,8 +167,13 @@ rule snpeff_annotate_indel:
         genome_name=config["params"]["snpeff"]["genome_name"],
         data_dir=config["params"]["snpeff"]["data_dir"],
         data_dir_abs=lambda wildcards: os.path.abspath(config["params"]["snpeff"]["data_dir"]),
-        java_options=config["params"]["snpeff"].get("java_options", ""),
+        java_options=lambda wildcards, threads: java_options_with_active_processors(
+            config["params"]["snpeff"].get("java_options", ""),
+            threads
+        ),
         extra=config["params"]["snpeff"].get("extra", "")
+    threads:
+        int(config["params"]["snpeff"].get("threads", 1))
     log:
         "logs/snpeff/annotate_indel.log"
     shell:

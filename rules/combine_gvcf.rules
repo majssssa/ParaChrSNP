@@ -6,8 +6,13 @@ rule combine_gvcf:
         "combined.g.vcf.gz"
     log:
         "logs/gatk/combine_gvcf.log"
+    threads:
+        int(config["params"].get("combine_vcf", {}).get("threads", 1))
     params:
-        java_options=config['params']['combine_vcf']['java_options'],
+        java_options=lambda wildcards, threads: java_options_with_active_processors(
+            config["params"]["combine_vcf"]["java_options"],
+            threads
+        ),
         variants=lambda wildcards, input: " ".join(f"--variant {vcf}" for vcf in input.gvcf)
     shell:
-        "gatk CombineGVCFs {params.java_options} -R {input.fa} {params.variants} -O {output} > {log} 2>&1"
+        "gatk {params.java_options} CombineGVCFs -R {input.fa} {params.variants} -O {output} > {log} 2>&1"

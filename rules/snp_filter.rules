@@ -18,7 +18,7 @@ rule snp_filter:
         marked_vcf="$tmp_prefix.vcf.gz"
         trap 'rm -f "$marked_vcf" "$marked_vcf.tbi" "$marked_vcf.idx"' EXIT
 
-        gatk VariantFiltration \
+        gatk --java-options "-XX:ActiveProcessorCount=1" VariantFiltration \
             -R {input.ref} \
             -V {input.vcf} \
             --filter-expression "{params.expression}" \
@@ -26,7 +26,7 @@ rule snp_filter:
             -O "$marked_vcf" \
             > {log} 2>&1
 
-        gatk SelectVariants \
+        gatk --java-options "-XX:ActiveProcessorCount=1" SelectVariants \
             -R {input.ref} \
             -V "$marked_vcf" \
             --exclude-filtered \

@@ -1,6 +1,7 @@
 rule snp_select:
     input:
         vcf="result_vcfs/combined.vcf.gz",
+        index="result_vcfs/combined.vcf.gz.tbi",
         ref=config['reference']
     output:
         vcf="result_vcfs/combined.snp.vcf.gz"
@@ -9,4 +10,4 @@ rule snp_select:
     params:
         extra="--select-type-to-include SNP"
     shell:
-        "gatk SelectVariants -R {input.ref} {params.extra} -V {input.vcf} -O {output.vcf} > {log} 2>&1"
+        "gatk --java-options \"-XX:ActiveProcessorCount=1\" SelectVariants -R {input.ref} {params.extra} -V {input.vcf} -O {output.vcf} > {log} 2>&1"

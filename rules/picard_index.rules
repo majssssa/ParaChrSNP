@@ -7,4 +7,4 @@ rule picard_index:
     log:
         "logs/index/picard_index.log"
     shell:
-        "gatk CreateSequenceDictionary -R {input.ref} -O {output} > {log} 2>&1"
+        "gatk --java-options \"-XX:ActiveProcessorCount=1\" CreateSequenceDictionary -R {input.ref} -O {output} > {log} 2>&1"

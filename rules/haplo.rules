@@ -9,7 +9,16 @@ rule haplo:
         "gvcf/{sample}.{chrom}.g.vcf.gz"
     log:
         "logs/gatk/haplotypecaller/{sample}.{chrom}.log"
+    threads:
+        max(
+            int(config["params"]["haplotype_caller"].get("threads", 1)),
+            int(config["params"]["haplotype_caller"].get("native_pair_hmm_threads", 1))
+        )
     params:
-        java_options=config['params']['haplotype_caller']['java_options']
+        java_options=config["params"]["haplotype_caller"]["java_options"],
+        native_pair_hmm_threads=lambda wildcards, threads: min(
+            int(config["params"]["haplotype_caller"].get("native_pair_hmm_threads", threads)),
+            int(threads),
+        )
     shell:
-        "gatk {params.java_options} HaplotypeCaller -R {input.ref} -L {wildcards.chrom} --emit-ref-confidence GVCF -I {input.bam} -O {output} > {log} 2>&1"
+        "gatk {params.java_options} HaplotypeCaller -R {input.ref} -L {wildcards.chrom} --emit-ref-confidence GVCF -I {input.bam} --native-pair-hmm-threads {params.native_pair_hmm_threads} -O {output} > {log} 2>&1"

@@ -1,0 +1,40 @@
+reference: "reference/genome.fa"
+
+container:
+    image: "containers/ParaChrSNP.sif"
+
+samples:
+    sample1: "raw_fastq/sample1"
+    sample2: "raw_fastq/sample2"
+    sample3: "raw_fastq/sample3"
+
+chromosomes:
+  - Chr01
+  - Chr02
+  - Chr03
+
+params:
+    align:
+        executable: "bwa-mem2"
+        bwa_threads: 4
+        sort_threads: 2
+
+    mark_duplicates:
+        threads: 1
+        java_options: "--java-options \"-Xmx10g\""
+
+    haplotype_caller:
+        threads: 1
+        native_pair_hmm_threads: 1
+        java_options: "--java-options \"-Xms512m -Xmx4g\""
+
+    joint_calling:
+        reader_threads: 4
+        genotype_threads: 1
+        gather_threads: 1
+        batch_size: 50
+        import_java_options: "--java-options \"-Xms1g -Xmx16g\""
+        genotype_java_options: "--java-options \"-Xms512m -Xmx16g\""
+        gather_java_options: "--java-options \"-Xms512m -Xmx16g\""
+        extra_import: ""
+        extra_genotype: ""

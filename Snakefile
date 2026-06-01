@@ -8,6 +8,33 @@ container: config.get("container", {}).get("image", "ParaChrSNP.sif")
 def reference_dict(reference):
     return re.sub(r"\.(fa|fasta)$", ".dict", reference)
 
+def java_options_with_active_processors(java_options, threads=1):
+    """Limit JVM CPU discovery unless the user already set it explicitly."""
+    options = str(java_options).strip()
+    if "-XX:ActiveProcessorCount" in options:
+        return options
+
+    active_option = f"-XX:ActiveProcessorCount={int(threads)}"
+    match = re.search(r'--java-options\s+(["\'])(.*?)\1', options)
+    if match:
+        quote = match.group(1)
+        current = match.group(2).strip()
+        replacement = f"--java-options {quote}{current} {active_option}{quote}"
+        return options[:match.start()] + replacement + options[match.end():]
+
+    return f"{active_option} {options}".strip()
+
+def scaled_bwa_threads(total_threads, bwa_threads, sort_threads):
+    """Keep piped bwa-mem2 and samtools sort thread use within Snakemake's allocation."""
+    total_threads = int(total_threads)
+    bwa_threads = int(bwa_threads)
+    sort_threads = int(sort_threads)
+    if total_threads <= 1:
+        return {"bwa": 1, "sort": 0}
+    scaled_sort = min(sort_threads, total_threads - 1)
+    scaled_bwa = min(bwa_threads, total_threads - scaled_sort)
+    return {"bwa": max(1, scaled_bwa), "sort": max(0, scaled_sort)}
+
 SAMPLE_PATTERN = "|".join(re.escape(sample) for sample in config["samples"])
 CHROM_PATTERN = "|".join(re.escape(chrom) for chrom in config["chromosomes"])
 
@@ -16,6 +43,8 @@ OPTIONAL_TARGETS = []
 JOINT_CALLING_CONFIG = config["params"].setdefault("joint_calling", {})
 JOINT_CALLING_CONFIG.setdefault("method", "genomicsdb")
 JOINT_CALLING_CONFIG.setdefault("reader_threads", 4)
+JOINT_CALLING_CONFIG.setdefault("genotype_threads", 1)
+JOINT_CALLING_CONFIG.setdefault("gather_threads", 1)
 JOINT_CALLING_CONFIG.setdefault("batch_size", 50)
 JOINT_CALLING_CONFIG.setdefault("import_java_options", '--java-options "-Xms1g -Xmx16g"')
 JOINT_CALLING_CONFIG.setdefault("genotype_java_options", config["params"]["genotype_gvcfs"]["java_options"])
@@ -114,7 +143,7 @@ LD_DECAY_CONFIG.setdefault("pop_info", "")
 LD_DECAY_CONFIG.setdefault("output_dir", "ld_decay")
 LD_DECAY_CONFIG.setdefault("executable", "PopLDdecay")
 LD_DECAY_CONFIG.setdefault("max_dist", 300)
-LD_DECAY_CONFIG.setdefault("threads", 4)
+LD_DECAY_CONFIG.setdefault("threads", 1)
 LD_DECAY_CONFIG.setdefault("extra", "")
 
 if config["params"].get("imputation", {}).get("enabled", False):
@@ -271,6 +300,7 @@ include: "rules/faidx_index.rules"
 include: "rules/haplo.rules"
 include: "rules/indel_filter.rules"
 include: "rules/indel_select.rules"
+include: "rules/index_combined_vcf.rules"
 include: "rules/joint_calling.rules"
 include: "rules/picard_index.rules"
 include: "rules/samtools_index.rules"

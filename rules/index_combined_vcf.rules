@@ -1,0 +1,14 @@
+rule index_combined_vcf:
+    input:
+        vcf="result_vcfs/combined.vcf.gz"
+    output:
+        tbi="result_vcfs/combined.vcf.gz.tbi"
+    log:
+        "logs/gatk/index/combined_vcf.log"
+    shell:
+        """
+        mkdir -p logs/gatk/index
+        gatk --java-options "-XX:ActiveProcessorCount=1" IndexFeatureFile \
+            -I {input.vcf} \
+            > {log} 2>&1
+        """

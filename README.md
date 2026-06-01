@@ -63,17 +63,25 @@ params:
 
     bwa:
         bwa_threads: 4
+        sort_threads: 2
 
     fastp:
         fastp_threads: 4
 
     haplotype_caller:
+        threads: 1
+        native_pair_hmm_threads: 1
         java_options: "--java-options \"-Xms512m -Xmx4g\""
+
+    mark_duplicates:
+        threads: 1
+        java_options: "--java-options \"-Xmx10g\""
 
     genotype_gvcfs:
         java_options: "--java-options \"-Xms512m -Xmx128g\""
 
     combine_vcf:
+        threads: 1
         java_options: "--java-options \"-Xms512m -Xmx128g\""
 
     joint_calling:
@@ -109,14 +117,17 @@ params:
         output_prefix: "missing/combined.snp.filtered"
         plot_prefix: "missing/combined.snp.filtered.miss_check"
         plot_script: "scripts/plink-missing-nature_1.R"
+        threads: 4
         extra: "--allow-extra-chr"
 
     vcf_convert:
         input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
         output_prefix: "format_convert/combined.snp.filtered"
         plink_extra: "--allow-extra-chr"
+        plink_threads: 4
         tassel_executable: "run_pipeline.pl"
         tassel_memory: "-Xmx10g"
+        tassel_threads: 4
         tassel_extra: ""
 
     imputation:
@@ -179,7 +190,7 @@ params:
         output_dir: "ld_decay"
         executable: "PopLDdecay"
         max_dist: 300
-        threads: 4
+        threads: 1
         extra: ""
 
     vcf2pca:
@@ -213,6 +224,7 @@ params:
         output_prefix: "annotation/combined"
         database_done: "annotation/snpeff_db.done"
         java_options: "-Xmx32g"
+        threads: 1
         extra: ""
 ```
 
@@ -225,13 +237,17 @@ Before running the workflow, edit `config.yaml` and check the following fields:
 - `params.qc.threads`: Number of threads used by RastQC.
 - `params.fastp.fastp_threads`: Number of threads used by `fastp`.
 - `params.bwa.executable`: Alignment executable. The default is `bwa-mem2`; a custom `bwa-mem2` path can also be used.
-- `params.bwa.bwa_threads`: Number of threads used by `bwa-mem2 mem` and `samtools sort`.
+- `params.bwa.bwa_threads`: Number of threads used by `bwa-mem2 mem`.
+- `params.bwa.sort_threads`: Number of threads used by `samtools sort`. The `bwa_mem` rule reserves `bwa_threads + sort_threads` CPU threads in Snakemake.
 - `params.joint_calling.method`: Joint-calling strategy. The default is `genomicsdb`, which is recommended for multiple samples. The legacy strategy can be selected with `combine_gvcfs`.
 - `params.joint_calling.reader_threads`: Number of reader threads used by `GenomicsDBImport`.
 - `params.joint_calling.batch_size`: Number of samples imported per batch by `GenomicsDBImport`. Reduce this value for large cohorts or limited memory.
 - `params.joint_calling.import_java_options`: Java memory options for `GenomicsDBImport`.
 - `params.joint_calling.genotype_java_options`: Java memory options for chromosome-level `GenotypeGVCFs`.
 - `params.snp_filter` and `params.indel_filter`: Configurable filtering thresholds for SNPs and INDELs.
+- `params.vcf_missing.threads`: Number of threads passed to PLINK `--missing`.
+- `params.vcf_convert.plink_threads`: Number of threads passed to PLINK format-conversion commands.
+- `params.vcf_convert.tassel_threads`: CPU count exposed to TASSEL through `JAVA_TOOL_OPTIONS` for HapMap conversion.
 - `params.vcf2pca.enabled`: Whether to run PCA analysis. `VCF2PCACluster` requires at least three samples; the full workflow automatically skips this module when fewer than three samples are configured.
 - `params.vcf2dis.enabled`: Whether to run genetic-distance and phylogenetic-tree analysis. `VCF2Dis` requires at least three samples; the full workflow automatically skips this module when fewer than three samples are configured.
 - `params.vcf2pca.sample_group`: Optional sample-group file for PCA. When empty or absent, `-InSampleGroup` is not passed to VCF2PCACluster.

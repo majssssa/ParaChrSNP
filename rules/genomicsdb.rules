@@ -30,7 +30,10 @@ if JOINT_CALLING_METHOD == "genomicsdb":
         threads:
             int(JOINT_CALLING_CONFIG.get("reader_threads", 4))
         params:
-            java_options=JOINT_CALLING_CONFIG.get("import_java_options", '--java-options "-Xms1g -Xmx16g"'),
+            java_options=lambda wildcards, threads: java_options_with_active_processors(
+                JOINT_CALLING_CONFIG.get("import_java_options", '--java-options "-Xms1g -Xmx16g"'),
+                threads
+            ),
             batch_size=JOINT_CALLING_CONFIG.get("batch_size", 50),
             extra=JOINT_CALLING_CONFIG.get("extra_import", "")
         shell:
@@ -59,10 +62,15 @@ if JOINT_CALLING_METHOD == "genomicsdb":
             "result_vcfs/by_chrom/{chrom}.vcf.gz"
         log:
             "logs/gatk/genotype_chrom/{chrom}.log"
+        threads:
+            int(JOINT_CALLING_CONFIG.get("genotype_threads", 1))
         params:
-            java_options=JOINT_CALLING_CONFIG.get(
-                "genotype_java_options",
-                config["params"]["genotype_gvcfs"]["java_options"],
+            java_options=lambda wildcards, threads: java_options_with_active_processors(
+                JOINT_CALLING_CONFIG.get(
+                    "genotype_java_options",
+                    config["params"]["genotype_gvcfs"]["java_options"],
+                ),
+                threads
             ),
             extra=JOINT_CALLING_CONFIG.get("extra_genotype", "")
         shell:

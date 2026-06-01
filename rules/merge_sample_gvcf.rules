@@ -16,4 +16,4 @@ rule merge_sample_gvcf:
     log:
         "logs/gatk/merge_sample_gvcf/{sample}.log"
     shell:
-        "gatk MergeVcfs -I {input} -O {output} > {log} 2>&1"
+        "gatk --java-options \"-XX:ActiveProcessorCount=1\" MergeVcfs -I {input} -O {output} > {log} 2>&1"

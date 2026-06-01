@@ -1,0 +1,212 @@
+configfile: "config.yaml"
+
+import re
+
+container: config.get("container", {}).get("image", "containers/ParaChrSNP.sif")
+
+SAMPLES = list(config["samples"])
+
+wildcard_constraints:
+    sample="|".join(re.escape(sample) for sample in SAMPLES)
+
+
+def reference_dict(reference):
+    return re.sub(r"\.(fa|fasta)$", ".dict", reference)
+
+
+def java_options_with_active_processors(java_options, threads=1):
+    options = str(java_options).strip()
+    if "-XX:ActiveProcessorCount" in options:
+        return options
+    active_option = f"-XX:ActiveProcessorCount={int(threads)}"
+    match = re.search(r'--java-options\s+(["\'])(.*?)\1', options)
+    if match:
+        quote = match.group(1)
+        current = match.group(2).strip()
+        replacement = f"--java-options {quote}{current} {active_option}{quote}"
+        return options[:match.start()] + replacement + options[match.end():]
+    return f"{active_option} {options}".strip()
+
+
+def scaled_bwa_threads(total_threads, bwa_threads, sort_threads):
+    total_threads = int(total_threads)
+    bwa_threads = int(bwa_threads)
+    sort_threads = int(sort_threads)
+    if total_threads <= 1:
+        return {"bwa": 1, "sort": 0}
+    scaled_sort = min(sort_threads, total_threads - 1)
+    scaled_bwa = min(bwa_threads, total_threads - scaled_sort)
+    return {"bwa": max(1, scaled_bwa), "sort": max(0, scaled_sort)}
+
+
+rule all:
+    input:
+        "result_vcfs/combined.vcf.gz"
+
+
+rule bwa_index:
+    input:
+        ref=config["reference"]
+    output:
+        config["reference"] + ".amb",
+        config["reference"] + ".ann",
+        config["reference"] + ".bwt",
+        config["reference"] + ".pac",
+        config["reference"] + ".sa"
+    log:
+        "logs/index/bwa_index.log"
+    params:
+        executable=config["params"]["align"].get("executable", "bwa")
+    shell:
+        "mkdir -p logs/index && {params.executable} index {input.ref} > {log} 2>&1"
+
+
+rule faidx_index:
+    input:
+        ref=config["reference"]
+    output:
+        config["reference"] + ".fai"
+    log:
+        "logs/index/faidx_index.log"
+    shell:
+        "mkdir -p logs/index && samtools faidx {input.ref} > {log} 2>&1"
+
+
+rule sequence_dictionary:
+    input:
+        ref=config["reference"]
+    output:
+        reference_dict(config["reference"])
+    log:
+        "logs/index/sequence_dictionary.log"
+    shell:
+        "mkdir -p logs/index && gatk --java-options \"-XX:ActiveProcessorCount=1\" CreateSequenceDictionary -R {input.ref} -O {output} > {log} 2>&1"
+
+
+rule bwa_align:
+    input:
+        amb=config["reference"] + ".amb",
+        ann=config["reference"] + ".ann",
+        bwt=config["reference"] + ".bwt",
+        pac=config["reference"] + ".pac",
+        sa=config["reference"] + ".sa",
+        ref=config["reference"],
+        fq1=lambda wildcards: config["samples"][wildcards.sample] + ".1.fq.gz",
+        fq2=lambda wildcards: config["samples"][wildcards.sample] + ".2.fq.gz"
+    output:
+        bam="sorted_bam/{sample}.sort.bam"
+    log:
+        "logs/bwa/{sample}.log"
+    benchmark:
+        "benchmarks/bwa/{sample}.tsv"
+    params:
+        executable=config["params"]["align"].get("executable", "bwa"),
+        rg=r"@RG\tID:{sample}\tPL:illumina\tPU:illumina\tLB:{sample}\tSM:{sample}",
+        prefix="sorted_bam/{sample}",
+        bwa_threads=lambda wildcards, threads: scaled_bwa_threads(threads, config["params"]["align"].get("bwa_threads", 4), config["params"]["align"].get("sort_threads", 2))["bwa"],
+        sort_threads=lambda wildcards, threads: scaled_bwa_threads(threads, config["params"]["align"].get("bwa_threads", 4), config["params"]["align"].get("sort_threads", 2))["sort"]
+    threads:
+        int(config["params"]["align"].get("bwa_threads", 4)) + int(config["params"]["align"].get("sort_threads", 2))
+    shell:
+        """
+        mkdir -p sorted_bam logs/bwa
+        (
+            {params.executable} mem -R '{params.rg}' -t {params.bwa_threads} {input.ref} {input.fq1} {input.fq2} \
+            | samtools sort -@ {params.sort_threads} -T {params.prefix} -O bam -o {output.bam} -
+        ) > {log} 2>&1
+        """
+
+
+rule mark_duplicates:
+    input:
+        bam="sorted_bam/{sample}.sort.bam",
+        dict=reference_dict(config["reference"])
+    output:
+        bam="duplicate_removed/{sample}.rmdup.bam",
+        metrics="duplicate_removed/{sample}.dup.txt"
+    log:
+        "logs/mark_duplicates/{sample}.log"
+    benchmark:
+        "benchmarks/mark_duplicates/{sample}.tsv"
+    threads:
+        int(config["params"]["mark_duplicates"].get("threads", 1))
+    params:
+        java_options=lambda wildcards, threads: java_options_with_active_processors(config["params"]["mark_duplicates"].get("java_options", "--java-options \"-Xmx10g\""), threads)
+    shell:
+        "mkdir -p duplicate_removed logs/mark_duplicates && gatk {params.java_options} MarkDuplicates -I {input.bam} -O {output.bam} -M {output.metrics} --REMOVE_DUPLICATES true > {log} 2>&1"
+
+
+rule index_rmdup:
+    input:
+        "duplicate_removed/{sample}.rmdup.bam"
+    output:
+        "duplicate_removed/{sample}.rmdup.bam.bai"
+    log:
+        "logs/samtools_index/{sample}.log"
+    benchmark:
+        "benchmarks/index_rmdup/{sample}.tsv"
+    shell:
+        "mkdir -p logs/samtools_index && samtools index {input} > {log} 2>&1"
+
+
+rule haplotypecaller_sample:
+    input:
+        bam="duplicate_removed/{sample}.rmdup.bam",
+        bai="duplicate_removed/{sample}.rmdup.bam.bai",
+        ref=config["reference"],
+        fai=config["reference"] + ".fai",
+        dict=reference_dict(config["reference"])
+    output:
+        "gvcf/{sample}.g.vcf.gz"
+    log:
+        "logs/haplotypecaller/{sample}.log"
+    benchmark:
+        "benchmarks/haplotypecaller/{sample}.tsv"
+    threads:
+        max(int(config["params"]["haplotype_caller"].get("threads", 1)), int(config["params"]["haplotype_caller"].get("native_pair_hmm_threads", 1)))
+    params:
+        java_options=config["params"]["haplotype_caller"].get("java_options", "--java-options \"-Xmx4g\""),
+        native_pair_hmm_threads=lambda wildcards, threads: min(int(config["params"]["haplotype_caller"].get("native_pair_hmm_threads", threads)), int(threads))
+    shell:
+        "mkdir -p gvcf logs/haplotypecaller && gatk {params.java_options} HaplotypeCaller -R {input.ref} --emit-ref-confidence GVCF -I {input.bam} --native-pair-hmm-threads {params.native_pair_hmm_threads} -O {output} > {log} 2>&1"
+
+
+rule combine_gvcfs:
+    input:
+        ref=config["reference"],
+        fai=config["reference"] + ".fai",
+        dict=reference_dict(config["reference"]),
+        gvcfs=expand("gvcf/{sample}.g.vcf.gz", sample=SAMPLES)
+    output:
+        "combined.g.vcf.gz"
+    log:
+        "logs/combine_gvcfs.log"
+    benchmark:
+        "benchmarks/combine_gvcfs.tsv"
+    threads:
+        int(config["params"]["combine_gvcfs"].get("threads", 1))
+    params:
+        java_options=lambda wildcards, threads: java_options_with_active_processors(config["params"]["combine_gvcfs"].get("java_options", "--java-options \"-Xmx16g\""), threads),
+        variants=lambda wildcards, input: " ".join(f"--variant {gvcf}" for gvcf in input.gvcfs)
+    shell:
+        "mkdir -p logs && gatk {params.java_options} CombineGVCFs -R {input.ref} {params.variants} -O {output} > {log} 2>&1"
+
+
+rule genotype_gvcfs:
+    input:
+        ref=config["reference"],
+        fai=config["reference"] + ".fai",
+        dict=reference_dict(config["reference"]),
+        gvcf="combined.g.vcf.gz"
+    output:
+        "result_vcfs/combined.vcf.gz"
+    log:
+        "logs/genotype_gvcfs.log"
+    benchmark:
+        "benchmarks/genotype_gvcfs.tsv"
+    threads:
+        int(config["params"]["genotype_gvcfs"].get("threads", 1))
+    params:
+        java_options=lambda wildcards, threads: java_options_with_active_processors(config["params"]["genotype_gvcfs"].get("java_options", "--java-options \"-Xmx16g\""), threads)
+    shell:
+        "mkdir -p result_vcfs logs && gatk {params.java_options} GenotypeGVCFs -R {input.ref} -V {input.gvcf} -O {output} > {log} 2>&1"

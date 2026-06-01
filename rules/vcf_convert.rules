@@ -9,6 +9,8 @@ rule vcf_to_plink_binary:
     params:
         output_prefix=config["params"]["vcf_convert"]["output_prefix"],
         extra=config["params"]["vcf_convert"].get("plink_extra", "--allow-extra-chr")
+    threads:
+        int(config["params"]["vcf_convert"].get("plink_threads", 4))
     log:
         "logs/vcf_convert/plink_binary.log"
     shell:
@@ -18,6 +20,7 @@ rule vcf_to_plink_binary:
         plink \
             --vcf {input.vcf} \
             {params.extra} \
+            --threads {threads} \
             --make-bed \
             --out {params.output_prefix} \
             > {log} 2>&1
@@ -38,6 +41,8 @@ rule vcf_to_plink_text:
     params:
         output_prefix=config["params"]["vcf_convert"]["output_prefix"],
         extra=config["params"]["vcf_convert"].get("plink_extra", "--allow-extra-chr")
+    threads:
+        int(config["params"]["vcf_convert"].get("plink_threads", 4))
     log:
         "logs/vcf_convert/plink_text.log"
     shell:
@@ -47,6 +52,7 @@ rule vcf_to_plink_text:
         plink \
             --bfile {params.output_prefix} \
             {params.extra} \
+            --threads {threads} \
             --recode \
             --out {params.output_prefix} \
             > {log} 2>&1
@@ -65,12 +71,15 @@ rule vcf_to_hapmap:
         tassel=config["params"]["vcf_convert"].get("tassel_executable", "run_pipeline.pl"),
         memory=config["params"]["vcf_convert"].get("tassel_memory", "-Xmx10g"),
         extra=config["params"]["vcf_convert"].get("tassel_extra", "")
+    threads:
+        int(config["params"]["vcf_convert"].get("tassel_threads", 4))
     log:
         "logs/vcf_convert/hapmap.log"
     shell:
         """
         mkdir -p $(dirname {params.output_prefix}) logs/vcf_convert
 
+        JAVA_TOOL_OPTIONS="-XX:ActiveProcessorCount={threads} -Djava.util.concurrent.ForkJoinPool.common.parallelism={threads}" \
         {params.tassel} \
             {params.memory} \
             -importGuess {input.vcf} \

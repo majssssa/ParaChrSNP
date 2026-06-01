@@ -664,8 +664,28 @@ INDEX_HTML = r"""<!doctype html>
               <input id="bwaThreads" type="number" min="1" value="8">
             </div>
             <div>
+              <label>samtools sort Threads</label>
+              <input id="sortThreads" type="number" min="1" value="2">
+            </div>
+            <div>
+              <label>HaplotypeCaller Job Threads</label>
+              <input id="haploThreads" type="number" min="1" value="1">
+            </div>
+            <div>
+              <label>HaplotypeCaller PairHMM Threads</label>
+              <input id="haploPairHmmThreads" type="number" min="1" value="1">
+            </div>
+            <div>
               <label>VCF2PCACluster Threads</label>
               <input id="pcaThreads" type="number" min="1" value="4">
+            </div>
+            <div>
+              <label>TASSEL HapMap Threads</label>
+              <input id="tasselThreads" type="number" min="1" value="4">
+            </div>
+            <div>
+              <label>PLINK Threads</label>
+              <input id="plinkThreads" type="number" min="1" value="4">
             </div>
             <div>
               <label>Beagle Threads</label>
@@ -677,7 +697,7 @@ INDEX_HTML = r"""<!doctype html>
             </div>
             <div>
               <label>LD Decay Threads</label>
-              <input id="ldDecayThreads" type="number" min="1" value="4">
+              <input id="ldDecayThreads" type="number" min="1" value="1">
             </div>
             <div>
               <label>GenomicsDBImport Reader Threads</label>
@@ -960,10 +980,15 @@ INDEX_HTML = r"""<!doctype html>
             qc: numberValue("qcThreads", 8),
             fastp: numberValue("fastpThreads", 8),
             bwa: numberValue("bwaThreads", 8),
+            sort: numberValue("sortThreads", 2),
+            haplo: numberValue("haploThreads", 1),
+            haplo_pairhmm: numberValue("haploPairHmmThreads", 1),
             pca: numberValue("pcaThreads", 4),
+            tassel: numberValue("tasselThreads", 4),
+            plink: numberValue("plinkThreads", 4),
             imputation: numberValue("imputationThreads", 4),
             admixture: numberValue("admixtureThreads", 4),
-            ld_decay: numberValue("ldDecayThreads", 4),
+            ld_decay: numberValue("ldDecayThreads", 1),
             genomicsdb: numberValue("genomicsdbThreads", 4),
             genomicsdb_batch_size: numberValue("genomicsdbBatchSize", 50),
             cnv_bin_size: numberValue("cnvBinSize", 100),
@@ -1640,10 +1665,15 @@ def base_config(payload):
     qc_threads = int_param(thread_cfg.get("qc"), 8)
     fastp_threads = int_param(thread_cfg.get("fastp"), 8)
     bwa_threads = int_param(thread_cfg.get("bwa"), 8)
+    sort_threads = int_param(thread_cfg.get("sort"), 2)
+    haplo_threads = int_param(thread_cfg.get("haplo"), 1)
+    haplo_pairhmm_threads = int_param(thread_cfg.get("haplo_pairhmm"), haplo_threads)
     pca_threads = int_param(thread_cfg.get("pca"), 4)
+    tassel_threads = int_param(thread_cfg.get("tassel"), 4)
+    plink_threads = int_param(thread_cfg.get("plink"), 4)
     imputation_threads = int_param(thread_cfg.get("imputation"), 4)
     admixture_threads = int_param(thread_cfg.get("admixture"), 4)
-    ld_decay_threads = int_param(thread_cfg.get("ld_decay"), 4)
+    ld_decay_threads = int_param(thread_cfg.get("ld_decay"), 1)
     genomicsdb_threads = int_param(thread_cfg.get("genomicsdb"), 4)
     genomicsdb_batch_size = int_param(thread_cfg.get("genomicsdb_batch_size"), 50)
     cnv_bin_size = int_param(thread_cfg.get("cnv_bin_size"), 100)
@@ -1684,11 +1714,19 @@ def base_config(payload):
         "chromosomes": payload.get("chromosomes", []),
         "params": {
             "qc": {"threads": qc_threads, "extra": "--nozip"},
-            "bwa": {"bwa_threads": bwa_threads},
+            "bwa": {"bwa_threads": bwa_threads, "sort_threads": sort_threads},
             "fastp": {"fastp_threads": fastp_threads},
-            "haplotype_caller": {"java_options": haplo_java},
+            "haplotype_caller": {
+                "threads": haplo_threads,
+                "native_pair_hmm_threads": haplo_pairhmm_threads,
+                "java_options": haplo_java,
+            },
+            "mark_duplicates": {
+                "threads": 1,
+                "java_options": '--java-options "-Xmx10g"',
+            },
             "genotype_gvcfs": {"java_options": genotype_java},
-            "combine_vcf": {"java_options": combine_java},
+            "combine_vcf": {"threads": 1, "java_options": combine_java},
             "joint_calling": {
                 "method": "genomicsdb",
                 "reader_threads": genomicsdb_threads,
@@ -1724,14 +1762,17 @@ def base_config(payload):
                 "output_prefix": "missing/combined.snp.filtered",
                 "plot_prefix": "missing/combined.snp.filtered.miss_check",
                 "plot_script": "scripts/plink-missing.py",
+                "threads": plink_threads,
                 "extra": "--allow-extra-chr",
             },
             "vcf_convert": {
                 "input_vcf": "result_vcfs/combined.snp.filtered.vcf.gz",
                 "output_prefix": "format_convert/combined.snp.filtered",
                 "plink_extra": "--allow-extra-chr",
+                "plink_threads": plink_threads,
                 "tassel_executable": "run_pipeline.pl",
                 "tassel_memory": "-Xmx10g",
+                "tassel_threads": tassel_threads,
                 "tassel_extra": "",
             },
             "imputation": {
@@ -1831,6 +1872,7 @@ def base_config(payload):
                 "output_prefix": "annotation/combined",
                 "database_done": "annotation/snpeff_db.done",
                 "java_options": snpeff_java,
+                "threads": 1,
                 "build_check_options": "-noCheckCds -noCheckProtein",
                 "extra": "",
             },

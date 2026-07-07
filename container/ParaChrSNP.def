@@ -10,6 +10,7 @@ From: mambaorg/micromamba:1.5.10
     /home/majunpeng/Software/VCF2PCACluster /opt/ParaChrSNP/src/VCF2PCACluster
     /home/majunpeng/Software/VCF2Dis-1.55 /opt/ParaChrSNP/src/VCF2Dis-1.55
     /home/majunpeng/Software/bwa-mem2-2.2.1_x64-linux /opt/ParaChrSNP/src/bwa-mem2-2.2.1_x64-linux
+    /home/majunpeng/Software/minibwa /opt/ParaChrSNP/src/minibwa
     /home/majunpeng/.cargo/bin/rastqc /opt/ParaChrSNP/bin/rastqc
 
 %post
@@ -51,44 +52,26 @@ EOF
         cp -L /opt/ParaChrSNP/src/bwa-mem2-2.2.1_x64-linux/bwa-mem2* /opt/ParaChrSNP/bin/
         chmod 755 /opt/ParaChrSNP/bin/bwa-mem2*
     fi
+    if [ -x /opt/ParaChrSNP/src/minibwa/minibwa ]; then
+        cp -L /opt/ParaChrSNP/src/minibwa/minibwa /opt/ParaChrSNP/bin/minibwa
+        chmod 755 /opt/ParaChrSNP/bin/minibwa
+    fi
+    if [ -f /opt/ParaChrSNP/scripts/cnvnator2VCF.pl ]; then
+        cp -L /opt/ParaChrSNP/scripts/cnvnator2VCF.pl /opt/ParaChrSNP/bin/cnvnator2VCF.pl
+        chmod 755 /opt/ParaChrSNP/bin/cnvnator2VCF.pl
+    fi
 
     for lib in Core RIO Hist Graf Gpad Tree MathCore; do
         root_lib=$(ls /opt/conda/envs/parachrsnp/lib/lib${lib}.so.6.* | sort -V | tail -n 1)
         ln -sf "$(basename "$root_lib")" /opt/conda/envs/parachrsnp/lib/lib${lib}.so.6.20
     done
 
-    mkdir -p /opt/ParaChrSNP/src/cnvnator_build
-    /opt/conda/envs/parachrsnp/bin/python3 - <<'EOF'
-import tarfile
-import urllib.request
-
-downloads = [
-    ("https://github.com/abyzovlab/CNVnator/archive/refs/tags/v0.3.3.tar.gz", "/tmp/cnvnator-v0.3.3.tar.gz", "/opt/ParaChrSNP/src/cnvnator_build"),
-    ("https://sourceforge.net/projects/samtools/files/samtools/0.1.19/samtools-0.1.19.tar.bz2/download", "/tmp/samtools-0.1.19.tar.bz2", "/opt/ParaChrSNP/src/cnvnator_build"),
-]
-for url, archive, outdir in downloads:
-    urllib.request.urlretrieve(url, archive)
-    with tarfile.open(archive) as handle:
-        handle.extractall(outdir)
-EOF
-    cd /opt/ParaChrSNP/src/cnvnator_build/samtools-0.1.19
-    make -j2 libbam.a INCLUDES="-I. -I/opt/conda/envs/parachrsnp/include" LIBPATH="-L/opt/conda/envs/parachrsnp/lib"
-    ln -sfn ../samtools-0.1.19 /opt/ParaChrSNP/src/cnvnator_build/CNVnator-0.3.3/samtools
-    cd /opt/ParaChrSNP/src/cnvnator_build/CNVnator-0.3.3
-    make clean || true
-    make -j2 OMP=no ROOTSYS=/opt/conda/envs/parachrsnp \
-        CXX="/opt/conda/envs/parachrsnp/bin/g++ -O3 -std=c++17 -DCNVNATOR_VERSION=\\\"v0.3.3\\\" -I/opt/conda/envs/parachrsnp/include" \
-        LIBS="-L/opt/conda/envs/parachrsnp/lib -lz -lbz2 -lcurl -llzma -lreadline -ltinfo -lssl -lcrypto -lpthread"
-    cp cnvnator /opt/ParaChrSNP/bin/cnvnator
-    cp cnvnator2VCF.pl /opt/ParaChrSNP/bin/cnvnator2VCF.pl
-    chmod 755 /opt/ParaChrSNP/bin/cnvnator /opt/ParaChrSNP/bin/cnvnator2VCF.pl
-
-    for cmd in snakemake gatk bwa bwa-mem2 samtools bcftools fastp plink admixture PopLDdecay run_pipeline.pl snpEff java python python3 Rscript convert rsvg-convert tabix bgzip; do
+    for cmd in snakemake gatk bwa bwa-mem2 samtools bcftools fastp plink admixture PopLDdecay run_pipeline.pl snpEff java python python3 Rscript convert rsvg-convert tabix bgzip cnvnator cnvnator2VCF.pl; do
         if [ -e "/opt/conda/envs/parachrsnp/bin/$cmd" ]; then
             ln -sf "/opt/conda/envs/parachrsnp/bin/$cmd" "/usr/local/bin/$cmd"
         fi
     done
-    for cmd in VCF2Dis VCF2PCACluster Plot2Deig Plot3Deig rastqc cnvnator cnvnator2VCF.pl bwa-mem2 bwa-mem2.avx bwa-mem2.avx2 bwa-mem2.avx512bw bwa-mem2.sse41 bwa-mem2.sse42; do
+    for cmd in VCF2Dis VCF2PCACluster Plot2Deig Plot3Deig rastqc bwa-mem2 bwa-mem2.avx bwa-mem2.avx2 bwa-mem2.avx512bw bwa-mem2.sse41 bwa-mem2.sse42 minibwa cnvnator2VCF.pl; do
         if [ -e "/opt/ParaChrSNP/bin/$cmd" ]; then
             ln -sf "/opt/ParaChrSNP/bin/$cmd" "/usr/local/bin/$cmd"
         fi
@@ -109,6 +92,7 @@ EOF
     snakemake --version
     bwa 2>&1 | head -n 1
     bwa-mem2 version
+    minibwa version
     samtools --version | head -n 1
     gatk --version
     find /opt/conda/envs/parachrsnp/share -path '*beagle*' -name 'beagle*.jar' | head -n 1 | grep -q beagle

@@ -10,7 +10,7 @@ if config["params"].get("admixture", {}).get("enabled", False):
             bim=ADMIXTURE_CFG.get("input_prefix", config["params"]["vcf_convert"]["output_prefix"]) + ".bim",
             fam=ADMIXTURE_CFG.get("input_prefix", config["params"]["vcf_convert"]["output_prefix"]) + ".fam",
             pop_info=lambda wildcards: [ADMIXTURE_CFG.get("pop_info")] if ADMIXTURE_CFG.get("pop_info") else [],
-            plot_script="scripts/admixture-plot-nature_1.R"
+            plot_script="scripts/admixture-plot-nature_2.R"
         output:
             pruned_bed=ADMIXTURE_OUT + "/pruned/admixture_pruned.bed",
             pruned_bim=ADMIXTURE_OUT + "/pruned/admixture_pruned.bim",

@@ -163,9 +163,14 @@ params:
         threads: 8
         extra: "--nozip"
 
-    bwa:
-        bwa_threads: 16
+    aligner:
+        name: "bwa-mem2"
+        executable: "bwa-mem2"
+        map_threads: 16
         sort_threads: 4
+        index_threads: 16
+        index_extra: ""
+        map_extra: ""
 
     fastp:
         fastp_threads: 16

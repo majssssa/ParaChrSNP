@@ -3,14 +3,28 @@ rule bwa_index:
         ref=config['reference'],
         precheck=ancient("reports/precheck.done")
     output:
-        idx0123=config['reference'] + ".0123",
-        amb=config['reference'] + ".amb",
-        ann=config['reference'] + ".ann",
-        bwt=config['reference'] + ".bwt.2bit.64",
-        pac=config['reference'] + ".pac"
+        ALIGNER_INDEX_FILES
     params:
-        executable=config["params"].get("bwa", {}).get("executable", "bwa-mem2")
+        aligner=ALIGNER_NAME,
+        executable=ALIGNER_CONFIG.get("executable", "bwa-mem2"),
+        index_threads=ALIGNER_CONFIG.get("index_threads", 4),
+        index_extra=ALIGNER_CONFIG.get("index_extra", "")
     log:
         "logs/index/bwa_index.log"
+    threads:
+        int(ALIGNER_CONFIG.get("index_threads", 4))
     shell:
-        "{params.executable} index {input.ref} > {log} 2>&1"
+        """
+        if [ "{params.aligner}" = "minibwa" ]; then
+            {params.executable} index \
+                -t {params.index_threads} \
+                {params.index_extra} \
+                {input.ref} \
+                > {log} 2>&1
+        else
+            {params.executable} index \
+                {params.index_extra} \
+                {input.ref} \
+                > {log} 2>&1
+        fi
+        """

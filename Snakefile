@@ -25,7 +25,7 @@ def java_options_with_active_processors(java_options, threads=1):
     return f"{active_option} {options}".strip()
 
 def scaled_bwa_threads(total_threads, bwa_threads, sort_threads):
-    """Keep piped bwa-mem2 and samtools sort thread use within Snakemake's allocation."""
+    """Keep piped aligner and samtools sort thread use within Snakemake's allocation."""
     total_threads = int(total_threads)
     bwa_threads = int(bwa_threads)
     sort_threads = int(sort_threads)
@@ -34,6 +34,35 @@ def scaled_bwa_threads(total_threads, bwa_threads, sort_threads):
     scaled_sort = min(sort_threads, total_threads - 1)
     scaled_bwa = min(bwa_threads, total_threads - scaled_sort)
     return {"bwa": max(1, scaled_bwa), "sort": max(0, scaled_sort)}
+
+BWA_CONFIG = config["params"].get("bwa", {})
+
+ALIGNER_CONFIG = config["params"].setdefault("aligner", {})
+ALIGNER_CONFIG.setdefault("name", BWA_CONFIG.get("name", "bwa-mem2"))
+ALIGNER_CONFIG.setdefault("executable", BWA_CONFIG.get("executable", "bwa-mem2"))
+ALIGNER_CONFIG.setdefault("map_threads", BWA_CONFIG.get("bwa_threads", 4))
+ALIGNER_CONFIG.setdefault("sort_threads", BWA_CONFIG.get("sort_threads", 2))
+ALIGNER_CONFIG.setdefault("index_threads", ALIGNER_CONFIG.get("map_threads", 4))
+ALIGNER_CONFIG.setdefault("index_extra", "")
+ALIGNER_CONFIG.setdefault("map_extra", "")
+
+ALIGNER_NAME = str(ALIGNER_CONFIG.get("name", "bwa-mem2")).lower()
+if ALIGNER_NAME not in ["bwa", "bwa-mem2", "minibwa"]:
+    raise ValueError("params.aligner.name must be 'bwa', 'bwa-mem2', or 'minibwa'")
+
+if ALIGNER_NAME == "minibwa":
+    ALIGNER_INDEX_FILES = [
+        config["reference"] + ".l2b",
+        config["reference"] + ".mbw",
+    ]
+else:
+    ALIGNER_INDEX_FILES = [
+        config["reference"] + ".0123",
+        config["reference"] + ".amb",
+        config["reference"] + ".ann",
+        config["reference"] + ".bwt.2bit.64",
+        config["reference"] + ".pac",
+    ]
 
 SAMPLE_PATTERN = "|".join(re.escape(sample) for sample in config["samples"])
 CHROM_PATTERN = "|".join(re.escape(chrom) for chrom in config["chromosomes"])

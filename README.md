@@ -9,7 +9,7 @@ ParaChrSNP is a containerized Snakemake workflow for chromosome-wise SNP discove
   <img src="figures/Parachrsnp.png" alt="ParaChrSNP workflow" width="1000">
 </p>
 
-**Figure 1.** ParaChrSNP is a containerized Snakemake workflow that processes paired-end resequencing reads into cohort-level variant calls and downstream population-genomic outputs. Input FASTQ files, a reference genome, optional genome annotation and population metadata are first checked for configuration consistency and executed within a Singularity or Apptainer container. Reads are assessed and cleaned, aligned to the reference genome with bwa-mem2, sorted, deduplicated and indexed to generate analysis-ready BAM files. The central step is chromosome-wise parallel variant calling: for each sample and chromosome, variant discovery is executed as an independent calling unit, followed by chromosome-level joint genotyping and gathering into a cohort VCF. The cohort VCF is then separated into SNP and INDEL classes, filtered with configurable criteria, assessed for missingness, optionally imputed, annotated and converted into common downstream formats. CNV detection is performed from BAM read-depth information, whereas PCA/tree inference, ADMIXTURE structure analysis, LD decay, nucleotide diversity (Pi) and SNP-density profiling branch from the filtered SNP VCF. Final VCF files, analysis-ready format conversions, summary tables, figures and quality metrics are assembled into an integrated HTML report.
+**Figure 1.** ParaChrSNP is a containerized Snakemake workflow that processes paired-end resequencing reads into cohort-level variant calls and downstream population-genomic outputs. Input FASTQ files, a reference genome, optional genome annotation and population metadata are first checked for configuration consistency and executed within a Singularity or Apptainer container. Reads are assessed and cleaned, aligned to the reference genome with `bwa-mem2`, `bwa` or `minibwa`, sorted, deduplicated and indexed to generate analysis-ready BAM files. The central step is chromosome-wise parallel variant calling: for each sample and chromosome, variant discovery is executed as an independent calling unit, followed by chromosome-level joint genotyping and gathering into a cohort VCF. The cohort VCF is then separated into SNP and INDEL classes, filtered with configurable criteria, assessed for missingness, optionally imputed, annotated and converted into common downstream formats. CNV detection is performed from BAM read-depth information, whereas PCA/tree inference, ADMIXTURE structure analysis, LD decay, nucleotide diversity (Pi) and SNP-density profiling branch from the filtered SNP VCF. Final VCF files, analysis-ready format conversions, summary tables, figures and quality metrics are assembled into an integrated HTML report.
 
 ## Download
 
@@ -39,11 +39,11 @@ The sample name is `{sample}`. For example, `raw_fastq/SRR001.1.fq.gz` and `raw_
 
 ## Configuration
 
-```bash
+```yaml
 reference: "reference/Arabidopsis_thaliana.fasta"
 
 container:
-    image: "ParaChrSNP.sif"
+    image: "ParaChrSNP_sandbox"
 
 samples:
     ERR16804307: "raw_fastq/ERR16804307"
@@ -61,32 +61,39 @@ params:
         threads: 4
         extra: "--nozip"
 
-    bwa:
-        bwa_threads: 4
+    aligner:
+        name: "minibwa"
+        executable: "minibwa"
+        map_threads: 4
         sort_threads: 2
+        index_threads: 4
+        index_extra: ""
+        map_extra: ""
 
     fastp:
         fastp_threads: 4
 
     haplotype_caller:
-        threads: 1
-        native_pair_hmm_threads: 1
+        threads: 4
+        native_pair_hmm_threads: 4
         java_options: "--java-options \"-Xms512m -Xmx4g\""
 
     mark_duplicates:
-        threads: 1
+        threads: 4
         java_options: "--java-options \"-Xmx10g\""
 
     genotype_gvcfs:
         java_options: "--java-options \"-Xms512m -Xmx128g\""
 
     combine_vcf:
-        threads: 1
+        threads: 4
         java_options: "--java-options \"-Xms512m -Xmx128g\""
 
     joint_calling:
         method: "genomicsdb"
         reader_threads: 16
+        genotype_threads: 1
+        gather_threads: 1
         batch_size: 50
         import_java_options: "--java-options \"-Xms1g -Xmx16g\""
         genotype_java_options: "--java-options \"-Xms512m -Xmx128g\""
@@ -127,11 +134,11 @@ params:
         plink_threads: 4
         tassel_executable: "run_pipeline.pl"
         tassel_memory: "-Xmx10g"
-        tassel_threads: 4
+        tassel_threads: 16
         tassel_extra: ""
 
     imputation:
-        enabled: true
+        enabled: false
         input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
         output_prefix: "imputation/combined.snp.filtered.beagle"
         jar: ""
@@ -140,7 +147,7 @@ params:
         extra: ""
 
     cnv:
-        enabled: true
+        enabled: false
         software: "cnvnator"
         executable: "cnvnator"
         vcf_converter: "cnvnator2VCF.pl"
@@ -149,7 +156,7 @@ params:
         extra: ""
 
     pi:
-        enabled: true
+        enabled: false
         input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
         pop_info: ""
         output_dir: "pi"
@@ -158,13 +165,13 @@ params:
         extra: ""
 
     snp_density:
-        enabled: true
+        enabled: false
         input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
         output_dir: "snp_density"
         window_size: 1000000
 
     admixture:
-        enabled: true
+        enabled: false
         input_prefix: "format_convert/combined.snp.filtered"
         output_dir: "admixture"
         executable: "admixture"
@@ -184,7 +191,7 @@ params:
         extra: ""
 
     ld_decay:
-        enabled: true
+        enabled: false
         input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
         pop_info: ""
         output_dir: "ld_decay"
@@ -194,7 +201,7 @@ params:
         extra: ""
 
     vcf2pca:
-        enabled: true
+        enabled: false
         executable: "VCF2PCACluster"
         sample_group: ""
         output_prefix: "pca/ParaChrSNP"
@@ -202,7 +209,7 @@ params:
         extra: ""
 
     vcf2dis:
-        enabled: true
+        enabled: false
         executable: "VCF2Dis"
         sample_group: ""
         output_matrix: "dis/ParaChrSNP.p_dis.mat"
@@ -211,7 +218,7 @@ params:
         extra: ""
 
     snpeff:
-        enabled: true
+        enabled: false
         annotate_snp: true
         annotate_indel: false
         executable: "snpEff"
@@ -230,15 +237,18 @@ params:
 
 Before running the workflow, edit `config.yaml` and check the following fields:
 
-- `container.image`: Path to the Singularity/Apptainer image. The default value is `ParaChrSNP.sif` in the project root directory.
+- `container.image`: Path to the Singularity/Apptainer image or sandbox directory. Use `ParaChrSNP.sif` for the image file or `ParaChrSNP_sandbox` after sandbox extraction.
 - `reference`: Reference genome FASTA file.
 - `samples`: Sample names and FASTQ prefixes.
 - `chromosomes`: Chromosome IDs for chromosome-wise calling. These names must match the sequence IDs in the reference FASTA.
 - `params.qc.threads`: Number of threads used by RastQC.
 - `params.fastp.fastp_threads`: Number of threads used by `fastp`.
-- `params.bwa.executable`: Alignment executable. The default is `bwa-mem2`; a custom `bwa-mem2` path can also be used.
-- `params.bwa.bwa_threads`: Number of threads used by `bwa-mem2 mem`.
-- `params.bwa.sort_threads`: Number of threads used by `samtools sort`. The `bwa_mem` rule reserves `bwa_threads + sort_threads` CPU threads in Snakemake.
+- `params.aligner.name`: Alignment backend. Supported values are `bwa-mem2`, `bwa`, and `minibwa`.
+- `params.aligner.executable`: Alignment executable or full executable path, for example `bwa-mem2`, `bwa`, `minibwa`, or `/home/majunpeng/Software/minibwa/minibwa`.
+- `params.aligner.map_threads`: Number of threads used by `bwa-mem2 mem`, `bwa mem`, or `minibwa map`.
+- `params.aligner.sort_threads`: Number of threads used by `samtools sort`. The `bwa_mem` rule reserves `map_threads + sort_threads` CPU threads in Snakemake.
+- `params.aligner.index_threads`: Number of threads used by `minibwa index`. This option is ignored by bwa-mem2 and bwa indexing.
+- `params.aligner.index_extra` and `params.aligner.map_extra`: Extra options passed to the selected aligner's index and mapping commands.
 - `params.joint_calling.method`: Joint-calling strategy. The default is `genomicsdb`, which is recommended for multiple samples. The legacy strategy can be selected with `combine_gvcfs`.
 - `params.joint_calling.reader_threads`: Number of reader threads used by `GenomicsDBImport`.
 - `params.joint_calling.batch_size`: Number of samples imported per batch by `GenomicsDBImport`. Reduce this value for large cohorts or limited memory.
@@ -269,7 +279,7 @@ Before running the workflow, edit `config.yaml` and check the following fields:
 - `params.admixture.geno`: PLINK site-missingness threshold before ADMIXTURE. The default is `0.999`, which removes completely missing sites.
 - `params.admixture.normalize_extra`: Extra PLINK options for building the ADMIXTURE input dataset. The default fills missing SNP IDs.
 - `params.admixture.admixture_plink_extra`: Extra PLINK options before exporting ADMIXTURE input. The default converts non-standard chromosome names to `0` for ADMIXTURE compatibility.
-- `params.admixture.pop_info`: Optional two-column sample-group file for sorting the structure plot. When empty, samples are displayed in PLINK FAM order.
+- `params.admixture.pop_info`: Optional two-column sample-group file for sorting the structure plot. When provided, samples are plotted strictly in the order of the first column in this file; FAM samples absent from `pop_info` are appended at the end in PLINK FAM order. When empty, samples are displayed in PLINK FAM order.
 - `params.admixture.show_sample_names`: Whether to show sample names on the ADMIXTURE structure plot. Use `true` for small sample sets and `false` for large cohorts.
 - `params.ld_decay.enabled`: Whether to run PopLDdecay. The module calculates LD decay for all samples together or for each group defined by `pop_info`.
 - `params.ld_decay.pop_info`: Optional two-column population file. When empty, all samples are merged into one group named `All`.
@@ -282,6 +292,40 @@ Before running the workflow, edit `config.yaml` and check the following fields:
 - `params.snpeff.build_check_options`: SnpEff database-build checking options. The default is `-noCheckCds -noCheckProtein`, which is suitable for non-model organisms without CDS/protein FASTA files.
 
 The SnpEff custom database is built only from sequences listed in `chromosomes`, avoiding failures caused by uncalled organellar, unplaced or problematic annotation records.
+
+## Alignment Backend
+
+ParaChrSNP now uses a single alignment configuration block, `params.aligner`. The old `params.bwa` block is no longer needed in new configuration files. Existing old configuration files are still tolerated by the workflow for backward compatibility, but new runs should only edit `params.aligner`.
+
+Use `minibwa` for faster short-read alignment.
+
+```yaml
+params:
+    aligner:
+        name: "minibwa"
+        executable: "minibwa"
+        map_threads: 4
+        sort_threads: 2
+        index_threads: 4
+        index_extra: ""
+        map_extra: ""
+```
+
+Use `bwa-mem2` when you prefer the established BWA-MEM2 backend.
+
+```yaml
+params:
+    aligner:
+        name: "bwa-mem2"
+        executable: "bwa-mem2"
+        map_threads: 4
+        sort_threads: 2
+        index_threads: 4
+        index_extra: ""
+        map_extra: ""
+```
+
+When `name` is `minibwa`, ParaChrSNP builds and checks the `.l2b` and `.mbw` index files. When `name` is `bwa-mem2` or `bwa`, ParaChrSNP builds and checks the BWA-style index files `.0123`, `.amb`, `.ann`, `.bwt.2bit.64` and `.pac`. Switching the aligner can therefore trigger reference re-indexing, which is expected.
 
 ## Precheck
 
@@ -302,7 +346,7 @@ snakemake --snakefile Snakefile --configfile config.yaml --cores 1 --use-singula
 
 ## Run The Workflow
 
-Pre-extracting the Singularity/Apptainer container into a sandbox directory can substantially reduce repeated container startup overhead and improve overall workflow runtime, especially for large-scale Snakemake jobs with many rules.After pre-extracting the Singularity/Apptainer image into a sandbox directory, set container.image in config.yaml to the sandbox directory path so ParaChrSNP uses the pre-extracted container during workflow execution.
+Pre-extracting the Singularity/Apptainer container into a sandbox directory can substantially reduce repeated container startup overhead and improve overall workflow runtime, especially for large-scale Snakemake jobs with many rules. After pre-extracting the image, set `container.image` in `config.yaml` to the sandbox directory path so ParaChrSNP uses the pre-extracted container during workflow execution.
 
 ```bash
 singularity build --sandbox ParaChrSNP_sandbox ParaChrSNP.sif
@@ -312,18 +356,39 @@ Check the DAG and input availability without executing jobs.
 
 ```bash
 snakemake --snakefile Snakefile --configfile config.yaml --cores 4 --use-singularity -n
+
+# snakemake: Run the Snakemake workflow.
+# --snakefile Snakefile: Use Snakefile as the workflow entry point.
+# --configfile config.yaml: Use config.yaml as the workflow configuration file.
+# --cores 4: Allow Snakemake to schedule up to four CPU cores.
+# --use-singularity: Execute containerized rules with the image or sandbox defined by container.image.
+# -n: Dry-run mode; print the planned jobs without executing them.
 ```
 
 Run the complete workflow.
 
 ```bash
 snakemake --snakefile Snakefile --configfile config.yaml --cores 30 --use-singularity
+
+# snakemake: Run the Snakemake workflow.
+# --snakefile Snakefile: Use Snakefile as the workflow entry point.
+# --configfile config.yaml: Use config.yaml as the workflow configuration file.
+# --cores 30: Allow Snakemake to use up to 30 CPU cores.
+# --use-singularity: Execute containerized rules with the image or sandbox defined by container.image.
 ```
 
 If FASTQ files or the reference genome are outside the project directory, bind the external directories into the container.
 
 ```bash
 snakemake --snakefile Snakefile --configfile config.yaml --cores 30 --use-singularity --singularity-args "-B /data/fastq:/data/fastq -B /data/reference:/data/reference"
+
+# snakemake: Run the Snakemake workflow.
+# --snakefile Snakefile: Use Snakefile as the workflow entry point.
+# --configfile config.yaml: Use config.yaml as the workflow configuration file.
+# --cores 30: Allow Snakemake to use up to 30 CPU cores.
+# --use-singularity: Execute rules inside the configured container.
+# --singularity-args: Pass extra arguments to Singularity/Apptainer.
+# "-B /data/fastq:/data/fastq -B /data/reference:/data/reference": Bind external host directories into the same paths inside the container.
 ```
 
 ## Web Interface
@@ -412,20 +477,65 @@ Main output files include:
 
 ## Quick start
 
-Download example data
+Download example data.
 
 ```bash
 wget http://www.majunpeng.com/ParaChrSNP/example.tar.gz
-tar -xvf example.tar.gz
-mkdir raw_fastq && mkdir reference
-mv example/Arabidopsis_thaliana* ./reference/
-mv example/*.fq.gz ./raw_fastq/
+
+# wget: Download the ParaChrSNP example dataset archive.
+# http://www.majunpeng.com/ParaChrSNP/example.tar.gz: URL of the example data archive.
 ```
 
-Run workflow
+Extract the example data archive.
 
 ```bash
-snakemake --use-singularity --cores 64
+tar -xvf example.tar.gz
+
+# tar: Extract files from an archive.
+# -xvf: Extract files, print extracted file names, and read from the specified archive.
+# example.tar.gz: Input example data archive.
+```
+
+Create the expected input directories.
+
+```bash
+mkdir raw_fastq && mkdir reference
+
+# mkdir raw_fastq: Create the directory for paired-end FASTQ files.
+# &&: Run the second command only if the first command succeeds.
+# mkdir reference: Create the directory for the reference genome and related files.
+```
+
+Move the example reference genome files into the reference directory.
+
+```bash
+mv example/Arabidopsis_thaliana* ./reference/
+
+# mv: Move files or directories.
+# example/Arabidopsis_thaliana*: Match all example Arabidopsis reference files.
+# ./reference/: Destination reference directory.
+```
+
+Move the example FASTQ files into the raw FASTQ directory.
+
+```bash
+mv example/*.fq.gz ./raw_fastq/
+
+# mv: Move files or directories.
+# example/*.fq.gz: Match all compressed FASTQ files in the example directory.
+# ./raw_fastq/: Destination FASTQ directory.
+```
+
+Run the workflow with the configured container image or sandbox.
+
+```bash
+snakemake --snakefile Snakefile --configfile config.yaml --cores 64 --use-singularity
+
+# snakemake: Run the ParaChrSNP workflow.
+# --snakefile Snakefile: Use Snakefile as the workflow entry point.
+# --configfile config.yaml: Use config.yaml as the workflow configuration file.
+# --cores 64: Allow Snakemake to use up to 64 CPU cores.
+# --use-singularity: Execute containerized rules with the image or sandbox defined by container.image.
 ```
 
 ## Contact

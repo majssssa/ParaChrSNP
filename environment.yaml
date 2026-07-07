@@ -23,6 +23,7 @@ dependencies:
   - brotlipy=0.7.0=py39h3811e60_1001
   - bwa=0.7.17=h5bf99c6_8
   - bwa-mem2
+  - minibwa
   - bzip2=1.0.8=h7f98852_4
   - c-ares=1.17.2=h7f98852_0
   - ca-certificates=2021.7.5=h06a4308_1

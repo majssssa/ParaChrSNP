@@ -1,42 +1,51 @@
 rule bwa_mem:
     input:
-        idx0123=config['reference'] + ".0123",
-        amb=config['reference'] + ".amb",
-        ann=config['reference'] + ".ann",
-        bwt=config['reference'] + ".bwt.2bit.64",
-        pac=config['reference'] + ".pac",
+        idx=ALIGNER_INDEX_FILES,
         ref=config['reference'],
         fq1="clean_reads/{sample}.1.clean.fq.gz",
         fq2="clean_reads/{sample}.2.clean.fq.gz"
     output:
         "sorted_reads/{sample}.sort.bam"
     params:
-        executable=config["params"].get("bwa", {}).get("executable", "bwa-mem2"),
+        aligner=ALIGNER_NAME,
+        executable=ALIGNER_CONFIG.get("executable", "bwa-mem2"),
         rg=r"@RG\tID:{sample}\tPL:illumina\tPU:illumina\tLB:{sample}\tSM:{sample}",
         sort_prefix="sorted_reads/{sample}",
+        map_extra=ALIGNER_CONFIG.get("map_extra", ""),
         bwa_threads=lambda wildcards, threads: scaled_bwa_threads(
             threads,
-            config["params"]["bwa"].get("bwa_threads", 4),
-            config["params"]["bwa"].get("sort_threads", 2),
+            ALIGNER_CONFIG.get("map_threads", 4),
+            ALIGNER_CONFIG.get("sort_threads", 2),
         )["bwa"],
         sort_threads=lambda wildcards, threads: scaled_bwa_threads(
             threads,
-            config["params"]["bwa"].get("bwa_threads", 4),
-            config["params"]["bwa"].get("sort_threads", 2),
+            ALIGNER_CONFIG.get("map_threads", 4),
+            ALIGNER_CONFIG.get("sort_threads", 2),
         )["sort"]
     log:
         "logs/bwa_mem/{sample}.log"
     threads:
-        int(config["params"]["bwa"].get("bwa_threads", 4)) + int(config["params"]["bwa"].get("sort_threads", 2))
+        int(ALIGNER_CONFIG.get("map_threads", 4)) + int(ALIGNER_CONFIG.get("sort_threads", 2))
     shell:
         """
         (
-            {params.executable} mem \
-                -R '{params.rg}' \
-                -t {params.bwa_threads} \
-                {input.ref} \
-                {input.fq1} \
-                {input.fq2} \
+            if [ "{params.aligner}" = "minibwa" ]; then
+                {params.executable} map \
+                    -R '{params.rg}' \
+                    -t {params.bwa_threads} \
+                    {params.map_extra} \
+                    {input.ref} \
+                    {input.fq1} \
+                    {input.fq2}
+            else
+                {params.executable} mem \
+                    -R '{params.rg}' \
+                    -t {params.bwa_threads} \
+                    {params.map_extra} \
+                    {input.ref} \
+                    {input.fq1} \
+                    {input.fq2}
+            fi \
             | samtools sort \
                 -@ {params.sort_threads} \
                 -T {params.sort_prefix} \

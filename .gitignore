@@ -15,6 +15,7 @@ readme.html
 *.sif
 *.simg
 *.sandbox/
+*_sandbox/
 *.sqsh
 
 # Raw sequencing data

@@ -1,27 +1,48 @@
-reference: "reference/Arabidopsis_thaliana.fasta"
+reference: "Camellia_sinensis.genome.fasta"
 
 container:
-    image: "ParaChrSNP.sif"
+    image: "ParaChrSNP_sandbox"
 
 samples:
-    ERR16804307: "raw_fastq/ERR16804307"
-    ERR16805220: "raw_fastq/ERR16805220"
-    ERR16805679: "raw_fastq/ERR16805679"
-    ERR16806713: "raw_fastq/ERR16806713"
+    sample1: "raw_fastq/sample1"
+    sample2: "raw_fastq/sample2"
+    sample3: "raw_fastq/sample3"
+    sample4: "raw_fastq/sample4"
+    sample5: "raw_fastq/sample5"
+    sample6: "raw_fastq/sample6"
+    sample7: "raw_fastq/sample7"
+    sample8: "raw_fastq/sample8"
+    sample9: "raw_fastq/sample9"
+    sample10: "raw_fastq/sample10"
 chromosomes:
-  - NC_003070.9
-  - NC_003071.7
-  - NC_003074.8
-  - NC_003075.7
-  - NC_003076.8
+  - NC_138961.1
+  - NC_138962.1
+  - NC_138963.1
+  - NC_138964.1
+  - NC_138965.1
+  - NC_138966.1
+  - NC_138967.1
+  - NC_138968.1
+  - NC_138969.1
+  - NC_138970.1
+  - NC_138971.1
+  - NC_138972.1
+  - NC_138973.1
+  - NC_138974.1
+  - NC_138975.1
 params:
     qc:
         threads: 4
         extra: "--nozip"
 
-    bwa:
-        bwa_threads: 4
+    aligner:
+        name: "minibwa"
+        executable: "minibwa"
+        map_threads: 4
         sort_threads: 2
+        index_threads: 4
+        index_extra: ""
+        map_extra: ""
 
     fastp:
         fastp_threads: 4
@@ -91,7 +112,7 @@ params:
         tassel_extra: ""
 
     imputation:
-        enabled: true
+        enabled: false
         input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
         output_prefix: "imputation/combined.snp.filtered.beagle"
         jar: ""
@@ -100,7 +121,7 @@ params:
         extra: ""
 
     cnv:
-        enabled: true
+        enabled: false
         software: "cnvnator"
         executable: "cnvnator"
         vcf_converter: "cnvnator2VCF.pl"
@@ -109,7 +130,7 @@ params:
         extra: ""
 
     pi:
-        enabled: true
+        enabled: false
         input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
         pop_info: ""
         output_dir: "pi"
@@ -118,13 +139,13 @@ params:
         extra: ""
 
     snp_density:
-        enabled: true
+        enabled: false
         input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
         output_dir: "snp_density"
         window_size: 1000000
 
     admixture:
-        enabled: true
+        enabled: false
         input_prefix: "format_convert/combined.snp.filtered"
         output_dir: "admixture"
         executable: "admixture"
@@ -144,7 +165,7 @@ params:
         extra: ""
 
     ld_decay:
-        enabled: true
+        enabled: false
         input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
         pop_info: ""
         output_dir: "ld_decay"
@@ -154,7 +175,7 @@ params:
         extra: ""
 
     vcf2pca:
-        enabled: true
+        enabled: false
         executable: "VCF2PCACluster"
         sample_group: ""
         output_prefix: "pca/ParaChrSNP"
@@ -162,7 +183,7 @@ params:
         extra: ""
 
     vcf2dis:
-        enabled: true
+        enabled: false
         executable: "VCF2Dis"
         sample_group: ""
         output_matrix: "dis/ParaChrSNP.p_dis.mat"
@@ -171,7 +192,7 @@ params:
         extra: ""
 
     snpeff:
-        enabled: true
+        enabled: false
         annotate_snp: true
         annotate_indel: false
         executable: "snpEff"

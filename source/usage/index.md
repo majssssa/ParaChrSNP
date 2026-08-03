@@ -279,7 +279,12 @@ Paths used in `config.yaml` must be visible inside the container after binding.
 
 ## Web interface
 
-Start the server-side launcher:
+The web interface has a dedicated guide covering server startup, allowed data
+roots, FASTQ detection, chromosome selection, optional modules, advanced
+resources, dry-runs, monitoring, reports, security, and troubleshooting. See
+the [complete Web interface guide](../web_interface/index.md).
+
+Start the server-side launcher with this minimal example:
 
 ```bash
 python web/parachrsnp_web.py \

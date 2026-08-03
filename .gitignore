@@ -108,3 +108,10 @@ __pycache__/
 .Rhistory
 .RData
 .Rproj.user/
+
+# readthedoc
+
+build/
+
+# glnexus_cli
+scripts/glnexus_cli

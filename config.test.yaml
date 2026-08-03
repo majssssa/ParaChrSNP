@@ -1,35 +1,19 @@
-reference: "Camellia_sinensis.genome.fasta"
+reference: "reference/Arabidopsis_thaliana.fasta"
 
 container:
     image: "ParaChrSNP_samblaster_minibwa0.6.sif"
 
 samples:
-    sample1: "raw_fastq/sample1"
-    sample2: "raw_fastq/sample2"
-    sample3: "raw_fastq/sample3"
-    sample4: "raw_fastq/sample4"
-    sample5: "raw_fastq/sample5"
-    sample6: "raw_fastq/sample6"
-    sample7: "raw_fastq/sample7"
-    sample8: "raw_fastq/sample8"
-    sample9: "raw_fastq/sample9"
-    sample10: "raw_fastq/sample10"
+    ERR16804307: "raw_fastq/ERR16804307"
+    ERR16805220: "raw_fastq/ERR16805220"
+    ERR16805679: "raw_fastq/ERR16805679"
+    ERR16806713: "raw_fastq/ERR16806713"
 chromosomes:
-  - NC_138961.1
-  - NC_138962.1
-  - NC_138963.1
-  - NC_138964.1
-  - NC_138965.1
-  - NC_138966.1
-  - NC_138967.1
-  - NC_138968.1
-  - NC_138969.1
-  - NC_138970.1
-  - NC_138971.1
-  - NC_138972.1
-  - NC_138973.1
-  - NC_138974.1
-  - NC_138975.1
+    - NC_003070.9
+    - NC_003071.7
+    - NC_003074.8
+    - NC_003075.7
+    - NC_003076.8
 params:
     qc:
         threads: 4
@@ -64,7 +48,7 @@ params:
         java_options: "--java-options \"-Xms512m -Xmx128g\""
 
     joint_calling:
-        method: "glnexus"
+        method: "genomicsdb"
         # method可选：genomicsdb、combine_gvcfs或glnexus。
         glnexus_executable: "scripts/glnexus_cli"
         glnexus_config: "gatk"

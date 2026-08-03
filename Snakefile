@@ -1,4 +1,5 @@
-configfile: "config.yaml"
+ACTIVE_CONFIGFILE = workflow.overwrite_configfiles[0] if workflow.overwrite_configfiles else "config.yaml"
+configfile: ACTIVE_CONFIGFILE
 
 import os
 import re
@@ -34,6 +35,19 @@ def scaled_bwa_threads(total_threads, bwa_threads, sort_threads):
     scaled_sort = min(sort_threads, total_threads - 1)
     scaled_bwa = min(bwa_threads, total_threads - scaled_sort)
     return {"bwa": max(1, scaled_bwa), "sort": max(0, scaled_sort)}
+
+def scaled_alignment_threads(total_threads, aligner_threads, sort_threads):
+    """为比对、单线程samblaster和samtools sort分配流水线线程。"""
+    total_threads = int(total_threads)
+    aligner_threads = int(aligner_threads)
+    sort_threads = int(sort_threads)
+    if total_threads <= 3:
+        return {"aligner": 1, "sort": 0}
+
+    worker_threads = total_threads - 2
+    scaled_sort = min(sort_threads, worker_threads - 1)
+    scaled_aligner = min(aligner_threads, worker_threads - scaled_sort)
+    return {"aligner": max(1, scaled_aligner), "sort": max(0, scaled_sort)}
 
 BWA_CONFIG = config["params"].get("bwa", {})
 
@@ -82,8 +96,12 @@ JOINT_CALLING_CONFIG.setdefault("extra_import", "")
 JOINT_CALLING_CONFIG.setdefault("extra_genotype", "")
 
 JOINT_CALLING_METHOD = JOINT_CALLING_CONFIG.get("method", "genomicsdb")
-if JOINT_CALLING_METHOD not in ["genomicsdb", "combine_gvcfs"]:
-    raise ValueError("params.joint_calling.method must be 'genomicsdb' or 'combine_gvcfs'")
+JOINT_CALLING_CONFIG.setdefault("glnexus_executable", "scripts/glnexus_cli")
+JOINT_CALLING_CONFIG.setdefault("glnexus_config", "gatk")
+JOINT_CALLING_CONFIG.setdefault("glnexus_threads", 4)
+JOINT_CALLING_CONFIG.setdefault("glnexus_concat_threads", 1)
+if JOINT_CALLING_METHOD not in ["genomicsdb", "combine_gvcfs", "glnexus"]:
+    raise ValueError("params.joint_calling.method must be 'genomicsdb', 'combine_gvcfs', or 'glnexus'")
 
 GVCF_TARGETS = expand(
     "gvcf/{sample}.{chrom}.g.vcf.gz",
@@ -317,7 +335,6 @@ rule all:
         "reports/ParaChrSNP_summary.tsv"
 
 include: "rules/precheck.rules"
-include: "rules/bam_rmdup.rules"
 include: "rules/bwa_index.rules"
 include: "rules/bwa_mem.rules"
 include: "rules/index_rmdup.rules"

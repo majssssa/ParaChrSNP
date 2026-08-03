@@ -1,6 +1,6 @@
 rule precheck:
     input:
-        config="config.yaml"
+        config=ACTIVE_CONFIGFILE
     output:
         done="reports/precheck.done",
         tsv="reports/precheck.tsv",

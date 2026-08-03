@@ -66,7 +66,7 @@ EOF
         ln -sf "$(basename "$root_lib")" /opt/conda/envs/parachrsnp/lib/lib${lib}.so.6.20
     done
 
-    for cmd in snakemake gatk bwa bwa-mem2 samtools bcftools fastp plink admixture PopLDdecay run_pipeline.pl snpEff java python python3 Rscript convert rsvg-convert tabix bgzip cnvnator cnvnator2VCF.pl; do
+    for cmd in snakemake gatk bwa bwa-mem2 samtools samblaster bcftools fastp plink admixture PopLDdecay run_pipeline.pl snpEff java python python3 Rscript convert rsvg-convert tabix bgzip cnvnator cnvnator2VCF.pl; do
         if [ -e "/opt/conda/envs/parachrsnp/bin/$cmd" ]; then
             ln -sf "/opt/conda/envs/parachrsnp/bin/$cmd" "/usr/local/bin/$cmd"
         fi
@@ -94,6 +94,7 @@ EOF
     bwa-mem2 version
     minibwa version
     samtools --version | head -n 1
+    samblaster --help 2>&1 | head -n 1
     gatk --version
     find /opt/conda/envs/parachrsnp/share -path '*beagle*' -name 'beagle*.jar' | head -n 1 | grep -q beagle
     fastp --version

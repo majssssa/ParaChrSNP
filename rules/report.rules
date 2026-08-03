@@ -17,6 +17,7 @@ rule report:
         hapmap=config["params"]["vcf_convert"]["output_prefix"] + ".hmp.txt",
         reference=config["reference"],
         reference_fai=config["reference"] + ".fai",
+        config_file=ACTIVE_CONFIGFILE,
         script="scripts/parachrsnp-report_4.py",
         optional=lambda wildcards: OPTIONAL_TARGETS
     output:
@@ -28,7 +29,7 @@ rule report:
         """
         mkdir -p reports logs/report
         python3 {input.script} \
-            --config config.yaml \
+            --config {input.config_file} \
             --out-html {output.html} \
             --out-tsv {output.tsv} \
             > {log} 2>&1

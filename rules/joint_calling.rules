@@ -1,3 +1,6 @@
+# GLnexus模式使用scripts/glnexus_cli对每条染色体的GVCF进行联合分型。
+# 原有genomicsdb和combine_gvcfs模式保持不变。
+
 if JOINT_CALLING_METHOD == "combine_gvcfs":
 
     rule joint_calling:
@@ -17,6 +20,68 @@ if JOINT_CALLING_METHOD == "combine_gvcfs":
             )
         shell:
             "gatk {params.java_options} GenotypeGVCFs -R {input.ref} -V {input.gvcf} -O {output.vcf} 2> {log}"
+
+elif JOINT_CALLING_METHOD == "glnexus":
+
+    rule glnexus_chrom:
+        input:
+            gvcfs=lambda wildcards: expand(
+                "gvcf/{sample}.{chrom}.g.vcf.gz",
+                sample=config["samples"],
+                chrom=wildcards.chrom,
+            )
+        output:
+            vcf="result_vcfs/by_chrom/{chrom}.glnexus.vcf.gz"
+        log:
+            "logs/glnexus/{chrom}.log"
+        threads:
+            int(JOINT_CALLING_CONFIG.get("glnexus_threads", 4))
+        params:
+            executable=JOINT_CALLING_CONFIG.get("glnexus_executable", "scripts/glnexus_cli"),
+            glnexus_config=JOINT_CALLING_CONFIG.get("glnexus_config", "gatk"),
+            scratch=lambda wildcards: f"glnexus_tmp/{wildcards.chrom}",
+            gvcfs=lambda wildcards, input: " ".join(input.gvcfs)
+        shell:
+            """
+            mkdir -p result_vcfs/by_chrom logs/glnexus glnexus_tmp
+            rm -rf {params.scratch}
+
+            {params.executable} \
+                --config {params.glnexus_config} \
+                --threads {threads} \
+                --dir {params.scratch} \
+                {params.gvcfs} \
+                2> {log} \
+            | bcftools view -Oz -o {output.vcf} \
+                >> {log} 2>&1
+
+            tabix -f -p vcf {output.vcf} >> {log} 2>&1
+            rm -rf {params.scratch}
+            """
+
+    rule joint_calling:
+        input:
+            vcfs=expand(
+                "result_vcfs/by_chrom/{chrom}.glnexus.vcf.gz",
+                chrom=config["chromosomes"],
+            )
+        output:
+            vcf="result_vcfs/combined.vcf.gz"
+        log:
+            "logs/glnexus/concat.log"
+        threads:
+            int(JOINT_CALLING_CONFIG.get("glnexus_concat_threads", 1))
+        params:
+            input_vcfs=lambda wildcards, input: " ".join(input.vcfs)
+        shell:
+            """
+            mkdir -p result_vcfs logs/glnexus
+            bcftools concat \
+                -Oz \
+                -o {output.vcf} \
+                {params.input_vcfs} \
+                > {log} 2>&1
+            """
 
 elif JOINT_CALLING_METHOD == "genomicsdb":
 

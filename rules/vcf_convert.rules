@@ -19,6 +19,7 @@ rule vcf_to_plink_binary:
 
         plink \
             --vcf {input.vcf} \
+            --vcf-half-call missing \
             {params.extra} \
             --threads {threads} \
             --make-bed \

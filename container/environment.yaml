@@ -9,6 +9,7 @@ dependencies:
   - bwa
   - bwa-mem2
   - samtools
+  - samblaster
   - bcftools
   - gatk4
   - picard

@@ -5,52 +5,77 @@ rule bwa_mem:
         fq1="clean_reads/{sample}.1.clean.fq.gz",
         fq2="clean_reads/{sample}.2.clean.fq.gz"
     output:
-        "sorted_reads/{sample}.sort.bam"
+        bam="duplicate_removed/{sample}.rmdup.bam",
+        metrics="duplicate_removed/{sample}.dup.txt"
     params:
         aligner=ALIGNER_NAME,
         executable=ALIGNER_CONFIG.get("executable", "bwa-mem2"),
         rg=r"@RG\tID:{sample}\tPL:illumina\tPU:illumina\tLB:{sample}\tSM:{sample}",
-        sort_prefix="sorted_reads/{sample}",
+        sort_prefix="duplicate_removed/{sample}",
         map_extra=ALIGNER_CONFIG.get("map_extra", ""),
-        bwa_threads=lambda wildcards, threads: scaled_bwa_threads(
+        bwa_threads=lambda wildcards, threads: scaled_alignment_threads(
             threads,
             ALIGNER_CONFIG.get("map_threads", 4),
             ALIGNER_CONFIG.get("sort_threads", 2),
-        )["bwa"],
-        sort_threads=lambda wildcards, threads: scaled_bwa_threads(
+        )["aligner"],
+        sort_threads=lambda wildcards, threads: scaled_alignment_threads(
             threads,
             ALIGNER_CONFIG.get("map_threads", 4),
             ALIGNER_CONFIG.get("sort_threads", 2),
         )["sort"]
     log:
-        "logs/bwa_mem/{sample}.log"
+        aligner="logs/bwa_mem/{sample}.log",
+        samblaster="logs/samblaster/{sample}.log",
+        sort="logs/samtools_sort/{sample}.log"
     threads:
-        int(ALIGNER_CONFIG.get("map_threads", 4)) + int(ALIGNER_CONFIG.get("sort_threads", 2))
+        int(ALIGNER_CONFIG.get("map_threads", 4)) + int(ALIGNER_CONFIG.get("sort_threads", 2)) + 2
     shell:
         """
-        (
-            if [ "{params.aligner}" = "minibwa" ]; then
-                {params.executable} map \
-                    -R '{params.rg}' \
-                    -t {params.bwa_threads} \
-                    {params.map_extra} \
-                    {input.ref} \
-                    {input.fq1} \
-                    {input.fq2}
-            else
-                {params.executable} mem \
-                    -R '{params.rg}' \
-                    -t {params.bwa_threads} \
-                    {params.map_extra} \
-                    {input.ref} \
-                    {input.fq1} \
-                    {input.fq2}
-            fi \
-            | samtools sort \
-                -@ {params.sort_threads} \
-                -T {params.sort_prefix} \
-                -O bam \
-                -o {output} \
-                -
-        ) > {log} 2>&1
+        mkdir -p duplicate_removed logs/bwa_mem logs/samblaster logs/samtools_sort
+
+        if [ "{params.aligner}" = "minibwa" ]; then
+            {params.executable} map \
+                -R '{params.rg}' \
+                -t {params.bwa_threads} \
+                {params.map_extra} \
+                {input.ref} \
+                {input.fq1} \
+                {input.fq2} \
+                2> {log.aligner}
+        else
+            {params.executable} mem \
+                -R '{params.rg}' \
+                -t {params.bwa_threads} \
+                {params.map_extra} \
+                {input.ref} \
+                {input.fq1} \
+                {input.fq2} \
+                2> {log.aligner}
+        fi \
+        | samblaster --removeDups 2> {log.samblaster} \
+        | samtools sort \
+            -@ {params.sort_threads} \
+            -T {params.sort_prefix} \
+            -O bam \
+            -o {output.bam} \
+            - \
+            2> {log.sort}
+
+        awk '
+            BEGIN {{
+                print "PERCENT_DUPLICATION"
+                found = 0
+            }}
+            /total read ids as duplicates/ {{
+                rate = $6
+                gsub(/[()%]/, "", rate)
+                printf "%.8f%s", rate / 100, ORS
+                found = 1
+            }}
+            END {{
+                if (!found) {{
+                    exit 1
+                }}
+            }}
+        ' {log.samblaster} > {output.metrics}
         """

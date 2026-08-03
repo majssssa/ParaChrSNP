@@ -1,12 +1,11 @@
-.. Parachrsnp documentation master file, created by
-   sphinx-quickstart on Mon Aug  3 19:06:42 2026.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+ParaChrSNP
+==========
 
-Parachrsnp
-========================
-
-ParaChrSNP is a containerized Snakemake workflow for chromosome-wise SNP discovery and population-genomic analysis from paired-end resequencing data. It streamlines the full process from read quality control and alignment to cohort-level variant calling, filtering, annotation, format conversion, optional genotype imputation, CNV detection and downstream population analyses. The central design of ParaChrSNP is per-sample by chromosome parallel variant calling, which splits large variant-calling tasks into independent chromosome-level units and then integrates them into a cohort VCF for downstream analysis.
+ParaChrSNP is a containerized Snakemake workflow for chromosome-wise SNP
+discovery and population-genomic analysis from paired-end resequencing data.
+It connects read quality control, alignment, duplicate removal, per-sample and
+per-chromosome variant calling, cohort joint calling, filtering, annotation,
+format conversion, and optional population-genomic analyses in one workflow.
 
 .. image:: Parachrsnp.png
      :alt: ParaChrSNP workflow
@@ -17,3 +16,8 @@ ParaChrSNP is a containerized Snakemake workflow for chromosome-wise SNP discove
    :maxdepth: 2
    :caption: Contents:
 
+   installation/index
+   quick_start/index
+   usage/index
+   changelog/index
+   faq/index

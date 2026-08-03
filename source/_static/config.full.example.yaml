@@ -1,0 +1,221 @@
+# Complete ParaChrSNP configuration example.
+# This example enables all optional modules. Replace every example path,
+# sample prefix, chromosome identifier, and resource value before analysis.
+
+reference: "reference/genome.fa"
+
+container:
+    image: "ParaChrSNP_samblaster_minibwa0.6.sif"
+
+# FASTQ prefixes do not include .1.fq.gz or .2.fq.gz.
+# At least three samples are required by the PCA and VCF2Dis modules.
+samples:
+    sample1: "raw_fastq/sample1"
+    sample2: "raw_fastq/sample2"
+    sample3: "raw_fastq/sample3"
+
+# Identifiers must match the reference FASTA headers exactly.
+chromosomes:
+  - Chr01
+  - Chr02
+  - Chr03
+
+params:
+    qc:
+        threads: 4
+        extra: "--nozip"
+
+    aligner:
+        name: "minibwa"
+        executable: "minibwa"
+        map_threads: 8
+        sort_threads: 4
+        index_threads: 8
+        index_extra: ""
+        map_extra: ""
+
+    fastp:
+        fastp_threads: 4
+
+    haplotype_caller:
+        threads: 8
+        native_pair_hmm_threads: 8
+        java_options: '--java-options "-Xms512m -Xmx16g"'
+
+    # Retained for BAM-processing rule resource compatibility.
+    mark_duplicates:
+        threads: 4
+        java_options: '--java-options "-Xmx10g"'
+
+    genotype_gvcfs:
+        java_options: '--java-options "-Xms512m -Xmx32g"'
+
+    combine_vcf:
+        threads: 4
+        java_options: '--java-options "-Xms512m -Xmx32g"'
+
+    joint_calling:
+        # Available methods: genomicsdb, combine_gvcfs, or glnexus.
+        method: "glnexus"
+        glnexus_executable: "scripts/glnexus_cli"
+        glnexus_config: "gatk"
+        glnexus_threads: 16
+        glnexus_concat_threads: 8
+        reader_threads: 8
+        genotype_threads: 1
+        gather_threads: 1
+        batch_size: 50
+        import_java_options: '--java-options "-Xms1g -Xmx16g"'
+        genotype_java_options: '--java-options "-Xms512m -Xmx32g"'
+        gather_java_options: '--java-options "-Xms512m -Xmx32g"'
+        extra_import: ""
+        extra_genotype: ""
+
+    snp_filter:
+        filter_name: "SNP_filter"
+        thresholds:
+            qd: 2.0
+            mq: 40.0
+            fs: 60.0
+            sor: 3.0
+            mq_rank_sum: -12.5
+            read_pos_rank_sum: -8.0
+
+    indel_filter:
+        filter_name: "INDEL_filter"
+        thresholds:
+            qd: 2.0
+            fs: 200.0
+            sor: 10.0
+            mq_rank_sum: -12.5
+            read_pos_rank_sum: -8.0
+
+    vcf_missing:
+        output_prefix: "missing/combined.snp.filtered"
+        plot_prefix: "missing/combined.snp.filtered.miss_check"
+        plot_script: "scripts/plink-missing-nature_1.R"
+        threads: 4
+        extra: "--allow-extra-chr"
+
+    vcf_convert:
+        input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
+        output_prefix: "format_convert/combined.snp.filtered"
+        plink_extra: "--allow-extra-chr"
+        plink_threads: 4
+        tassel_executable: "run_pipeline.pl"
+        tassel_memory: "-Xmx10g"
+        tassel_threads: 8
+        tassel_extra: ""
+
+    # Beagle genotype imputation.
+    imputation:
+        enabled: true
+        input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
+        output_prefix: "imputation/combined.snp.filtered.beagle"
+        # Leave empty to search common container paths, or provide a Beagle JAR.
+        jar: ""
+        java_options: "-Xmx16g"
+        threads: 8
+        extra: ""
+
+    # CNVnator read-depth CNV calling from deduplicated BAM files.
+    cnv:
+        enabled: true
+        software: "cnvnator"
+        executable: "cnvnator"
+        vcf_converter: "cnvnator2VCF.pl"
+        bin_size: 100
+        reference_dir: "reference"
+        extra: ""
+
+    # Window-based nucleotide diversity.
+    pi:
+        enabled: true
+        input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
+        pop_info: "pop.info"
+        output_dir: "pi"
+        window_size: 100000
+        window_step: 10000
+        extra: ""
+
+    # Non-overlapping chromosome-window SNP counts.
+    snp_density:
+        enabled: true
+        input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
+        output_dir: "snp_density"
+        window_size: 1000000
+
+    # ADMIXTURE analysis after PLINK conversion and LD pruning.
+    admixture:
+        enabled: true
+        input_prefix: "format_convert/combined.snp.filtered"
+        output_dir: "admixture"
+        executable: "admixture"
+        k_min: 1
+        k_max: 10
+        cv: 10
+        threads: 8
+        prune_window: 50
+        prune_step: 10
+        prune_r2: 0.2
+        geno: 0.1
+        pop_info: "pop.info"
+        show_sample_names: true
+        plink_extra: "--allow-extra-chr"
+        normalize_extra: "--allow-extra-chr --set-missing-var-ids @:#"
+        admixture_plink_extra: "--allow-extra-chr 0"
+        extra: ""
+
+    # Population-specific linkage-disequilibrium decay.
+    ld_decay:
+        enabled: true
+        input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
+        pop_info: "pop.info"
+        output_dir: "ld_decay"
+        executable: "PopLDdecay"
+        max_dist: 300
+        threads: 1
+        extra: ""
+
+    # Principal-component analysis; requires at least three samples.
+    vcf2pca:
+        enabled: true
+        executable: "VCF2PCACluster"
+        sample_group: "pop.info"
+        output_prefix: "pca/ParaChrSNP"
+        plot_prefix: "pca/ParaChrSNP.plot"
+        plot2_executable: "Plot2Deig"
+        plot3_executable: "Plot3Deig"
+        plot3_preview_script: "scripts/pca3d-preview_1.R"
+        threads: 8
+        extra: ""
+
+    # Pairwise genetic distances and Newick tree; requires at least three samples.
+    vcf2dis:
+        enabled: true
+        executable: "VCF2Dis"
+        sample_group: "pop.info"
+        output_matrix: "dis/ParaChrSNP.p_dis.mat"
+        output_tree: "dis/ParaChrSNP.p_dis.nwk"
+        tree_method: 1
+        extra: ""
+
+    # Custom SnpEff database construction and variant-effect annotation.
+    snpeff:
+        enabled: true
+        annotate_snp: true
+        annotate_indel: true
+        executable: "snpEff"
+        genome_name: "custom_genome"
+        data_dir: "annotation/snpeff_data"
+        config_file: "annotation/snpeff.config"
+        genome_fasta: "reference/genome.fa"
+        annotation_file: "reference/genes.gff3"
+        annotation_format: "gff3"
+        output_prefix: "annotation/combined"
+        database_done: "annotation/snpeff_db.done"
+        java_options: "-Xmx16g"
+        build_check_options: "-noCheckCds -noCheckProtein"
+        threads: 1
+        extra: ""
+

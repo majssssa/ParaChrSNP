@@ -56,6 +56,7 @@ joint-calling method.
 
 ```yaml
 reference: "reference/Arabidopsis_thaliana.fasta"
+Types: reads
 
 container:
     image: "ParaChrSNP.sif"

@@ -2,6 +2,9 @@
 # This example enables all optional modules. Replace every example path,
 # sample prefix, chromosome identifier, and resource value before analysis.
 
+Types: reads  # reads: paired FASTQ; bam: already deduplicated coordinate-sorted BAM
+bam_dir: input_bam  # Used only when Types is bam; expects input_bam/{sample}.bam
+
 reference: "reference/genome.fa"
 
 container:
@@ -218,4 +221,3 @@ params:
         build_check_options: "-noCheckCds -noCheckProtein"
         threads: 1
         extra: ""
-

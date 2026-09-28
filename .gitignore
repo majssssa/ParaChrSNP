@@ -20,6 +20,7 @@ readme.html
 
 # Raw sequencing data
 raw_fastq/
+input_bam/
 
 # Reference genomes and indexes
 reference/
@@ -29,6 +30,7 @@ qc/
 clean_reads/
 sorted_reads/
 duplicate_removed/
+staged_bam/
 gvcf/
 cnv/
 genomicsdb/

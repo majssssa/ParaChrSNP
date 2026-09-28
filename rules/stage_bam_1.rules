@@ -1,0 +1,15 @@
+# BAM 模式把外部已去重 BAM 只读接入独立的工作目录；不修改原始 BAM。
+rule stage_deduplicated_bam:
+    input:
+        bam=lambda wildcards: os.path.join(BAM_DIR, wildcards.sample + ".bam"),
+        precheck="reports/precheck.done"
+    output:
+        bam="staged_bam/{sample}.bam"
+    run:
+        # 使用相对软链接，使运行目录迁移时链接仍可追踪到输入文件。
+        source = os.path.abspath(input.bam)
+        target = os.path.abspath(output.bam)
+        if os.path.realpath(source) == target:
+            raise ValueError("BAM input resolves to its own workflow output: " + source)
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        os.symlink(os.path.relpath(source, os.path.dirname(target)), target)

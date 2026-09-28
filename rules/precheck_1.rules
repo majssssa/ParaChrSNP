@@ -1,0 +1,21 @@
+# 原始规则：rules/precheck.rules；使用支持 BAM 输入的预检脚本。
+rule precheck:
+    input:
+        config=ACTIVE_CONFIGFILE,
+        script="scripts/precheck_1.py"
+    output:
+        done="reports/precheck.done",
+        tsv="reports/precheck.tsv",
+        html="reports/precheck.html"
+    log:
+        "logs/precheck/precheck.log"
+    shell:
+        """
+        mkdir -p reports logs/precheck
+        python3 {input.script} \
+            --config {input.config} \
+            --out-tsv {output.tsv} \
+            --out-html {output.html} \
+            --done {output.done} \
+            > {log} 2>&1
+        """

@@ -29,6 +29,14 @@ optional module are provided in the
 
 ## Input files
 
+Choose one input type near the top of `config.yaml`. Omitting `Types` keeps
+the original `reads` behavior. Do not mix FASTQ and BAM samples in one run.
+
+```yaml
+Types: reads  # or bam
+bam_dir: input_bam
+```
+
 ### Reference genome
 
 Set the reference FASTA path:
@@ -41,6 +49,10 @@ ParaChrSNP creates or checks the required FASTA, sequence-dictionary, and
 aligner indexes. Do not switch reference assemblies between workflow steps.
 
 ### Paired FASTQ files
+
+This section applies when `Types: reads`. The workflow performs fastp,
+alignment, samblaster duplicate removal, BAM sorting and indexing before
+variant calling.
 
 Sample values are FASTQ prefixes without `.1.fq.gz` or `.2.fq.gz`.
 
@@ -58,6 +70,64 @@ raw_fastq/sample1.2.fq.gz
 raw_fastq/sample2.1.fq.gz
 raw_fastq/sample2.2.fq.gz
 ```
+
+### Already deduplicated BAM files
+
+Set `Types: bam` to start at the BAM stage. Each key in `samples` determines
+the expected filename `{bam_dir}/{sample}.bam`; its value may be `null` and
+is not treated as a FASTQ prefix.
+
+```yaml
+Types: bam
+bam_dir: input_bam
+samples:
+    sample1: null
+    sample2: null
+chromosomes:
+    - Chr01
+    - Chr02
+```
+
+Put `sample1.bam` and `sample2.bam` in `input_bam/`. Inputs must already be
+duplicate-removed, coordinate-sorted, and contain `@RG` records whose `SM`
+matches the sample key. Their reference contig names must match the configured
+FASTA. The precheck verifies BAM integrity, sort-order declaration, sample
+names, and configured contigs. It cannot prove that duplicates were removed
+or that the BAM was aligned against the exact same reference sequence; check
+those properties before analysis. A BAM index is *not* required on input.
+If `bam_dir` is outside the project directory, bind that directory into the
+Singularity/Apptainer container at the same path.
+
+The workflow links each source BAM to `staged_bam/{sample}.bam` and creates its
+`.bam.bai` index there. This keeps existing reads-mode BAMs in
+`duplicate_removed/` untouched.
+It never rewrites the source BAM. FASTQ quality control, fastp, alignment, and
+samblaster are skipped; unavailable reads-based metrics appear as `NA` in the
+HTML report. BAI indexes cannot cover contigs longer than 512 MiB; precheck
+rejects such BAMs rather than failing later during indexing. CSI support is
+not yet available in this workflow.
+
+Run the precheck and then the workflow:
+
+```bash
+snakemake --snakefile Snakefile --configfile config.yaml --cores 1 --use-singularity reports/precheck.done
+# snakemake: execute the ParaChrSNP workflow.
+# --snakefile Snakefile: use the ParaChrSNP workflow entry point.
+# --configfile config.yaml: read Types, bam_dir, samples and reference from this file.
+# --cores 1: allocate one local CPU to the precheck.
+# --use-singularity: run the workflow in the configured container when applicable.
+# reports/precheck.done: run only input validation before the full analysis.
+
+snakemake --snakefile Snakefile --configfile config.yaml --cores 64 --use-singularity
+# snakemake: execute all enabled workflow targets.
+# --snakefile Snakefile: use the ParaChrSNP workflow entry point.
+# --configfile config.yaml: read the selected input mode and file paths.
+# --cores 64: allow up to 64 CPU cores across concurrent jobs.
+# --use-singularity: run tools in the configured container.
+```
+
+Use a clean output directory when changing `Types` or replacing sample BAMs,
+so old GVCFs and reports cannot be mistaken for results from the new inputs.
 
 ### Chromosomes
 
@@ -188,6 +258,20 @@ MQRankSum < -12.5 || ReadPosRankSum < -8.0
 --exclude-filtered` then removes those sites from the final filtered VCFs.
 These filters operate on site-level annotations; they do not perform MAF,
 sample missingness, per-genotype DP, or per-genotype GQ filtering.
+
+### GLnexus output handling
+
+When `params.joint_calling.method: "glnexus"` is selected, ParaChrSNP uses
+the filtering logic built into GLnexus and does not apply an additional
+bcftools or GATK quality-filtering step after joint calling. The combined
+GLnexus VCF is only separated into SNP and INDEL files for downstream
+analyses. For compatibility with existing output paths, these files retain
+the names `combined.snp.filtered.vcf.gz` and
+`combined.indel.filtered.vcf.gz`; no second quality filter is implied by the
+filename.
+
+GenomicsDB and CombineGVCFs continue to use the GATK hard filters described
+above.
 
 ## Optional analyses
 

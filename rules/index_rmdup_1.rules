@@ -1,0 +1,10 @@
+# 原始规则：rules/index_rmdup.rules；按输入模式为 BAM 建立独立索引。
+rule index_rmdup:
+    input:
+        BAM_PATH_PATTERN
+    output:
+        BAM_INDEX_PATTERN
+    log:
+        "logs/samtools_index/rmdup/{sample}.log"
+    shell:
+        "samtools index {input} > {log} 2>&1"

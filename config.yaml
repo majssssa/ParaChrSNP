@@ -1,3 +1,6 @@
+Types: reads
+bam_dir: input_bam
+
 reference: "Camellia_sinensis.genome.fasta"
 
 container:

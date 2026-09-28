@@ -4,6 +4,26 @@ This page summarizes user-visible ParaChrSNP changes reflected in the current
 repository. Dates describe repository development milestones rather than a
 formal semantic-version release series.
 
+## 2026-09-28
+
+### BAM input mode
+
+- Added `Types: reads|bam`, with `reads` as the backward-compatible default.
+- BAM mode discovers `{bam_dir}/{sample}.bam`, checks the input BAMs, links
+  them into the existing duplicate-removed BAM interface, and indexes them.
+- Skips FASTQ cleaning, alignment, samblaster and RastQC in BAM mode.
+- Marks reads-only quality and depth metrics as unavailable in the report.
+
+## 2026-08-18
+
+### GLnexus workflow
+
+- Removed the redundant post-joint-calling bcftools filter from GLnexus mode.
+- GLnexus output is now separated directly into the final SNP and INDEL VCFs.
+- GenomicsDB and CombineGVCFs continue to use the existing GATK hard filters.
+- Retained the established `combined.*.filtered.vcf.gz` filenames for
+  compatibility with downstream modules and existing configurations.
+
 ## 2026-08-03
 
 ### Documentation
@@ -12,6 +32,16 @@ formal semantic-version release series.
 - Organized documentation into Installation, Quick start, Usage, Changelog,
   and FAQ sections.
 - Added local dependency definitions for reproducible Read the Docs builds.
+- Documented GLnexus-specific post-joint-calling filters and their defaults.
+
+### GLnexus filtering
+
+- Added a dedicated bcftools filter path for GLnexus pVCFs, which do not
+  contain the annotations required by the GATK hard-filter expressions.
+- Added configurable PASS status, biallelic-site, allele-quality, genotype
+  depth, genotype quality, missingness, and minor-allele-count filters.
+- Preserved the original GATK SNP and INDEL filtering behavior for GenomicsDB
+  and CombineGVCFs joint calling.
 
 ### Alignment and duplicate removal
 

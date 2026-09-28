@@ -1,0 +1,61 @@
+# 修改要求：GLnexus联合分型已经包含内部过滤，因此拆分SNP和INDEL后直接生成流程最终VCF，
+# 不再进入额外的GLnexus过滤规则；GenomicsDB和CombineGVCFs仍输出待GATK过滤的中间VCF。
+# 原始规则文件：rules/snp_select.rules、rules/indel_select.rules
+
+SELECTED_SNP_VCF = (
+    "result_vcfs/combined.snp.filtered.vcf.gz"
+    if JOINT_CALLING_METHOD == "glnexus"
+    else "result_vcfs/combined.snp.vcf.gz"
+)
+SELECTED_INDEL_VCF = (
+    "result_vcfs/combined.indel.filtered.vcf.gz"
+    if JOINT_CALLING_METHOD == "glnexus"
+    else "result_vcfs/combined.indel.vcf.gz"
+)
+SELECT_LOG_NAMESPACE = "glnexus" if JOINT_CALLING_METHOD == "glnexus" else "gatk"
+
+
+rule snp_select:
+    input:
+        vcf="result_vcfs/combined.vcf.gz",
+        index="result_vcfs/combined.vcf.gz.tbi",
+        ref=config["reference"]
+    output:
+        vcf=SELECTED_SNP_VCF
+    log:
+        f"logs/{SELECT_LOG_NAMESPACE}/select/snp.log"
+    params:
+        extra="--select-type-to-include SNP"
+    shell:
+        """
+        mkdir -p $(dirname {log})
+        gatk --java-options "-XX:ActiveProcessorCount=1" SelectVariants \
+            -R {input.ref} \
+            {params.extra} \
+            -V {input.vcf} \
+            -O {output.vcf} \
+            > {log} 2>&1
+        """
+
+
+rule indel_select:
+    input:
+        vcf="result_vcfs/combined.vcf.gz",
+        index="result_vcfs/combined.vcf.gz.tbi",
+        ref=config["reference"]
+    output:
+        vcf=SELECTED_INDEL_VCF
+    log:
+        f"logs/{SELECT_LOG_NAMESPACE}/select/indel.log"
+    params:
+        extra="--select-type-to-include INDEL"
+    shell:
+        """
+        mkdir -p $(dirname {log})
+        gatk --java-options "-XX:ActiveProcessorCount=1" SelectVariants \
+            -R {input.ref} \
+            {params.extra} \
+            -V {input.vcf} \
+            -O {output.vcf} \
+            > {log} 2>&1
+        """

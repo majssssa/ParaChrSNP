@@ -10,6 +10,9 @@ files. It browses and uses files that already exist on the server where
 ParaChrSNP is installed. The browser and the analysis process therefore see
 the same server-side paths.
 
+BAM input mode is currently configured through `config.yaml` and the command
+line; the web form's sample detector remains FASTQ-only.
+
 ![ParaChrSNP web interface](../../figures/web.png)
 
 ## What the interface can do
@@ -447,4 +450,3 @@ snakemake \
 Replace `JOB_ID` with the actual directory name recorded by the web interface.
 Only unlock after confirming that no other ParaChrSNP/Snakemake process is
 using the same project directory.
-

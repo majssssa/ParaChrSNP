@@ -6,6 +6,15 @@ import re
 
 container: config.get("container", {}).get("image", "ParaChrSNP.sif")
 
+INPUT_TYPE = str(config.get("Types", "reads")).lower()
+if INPUT_TYPE not in ("reads", "bam"):
+    raise ValueError("Types must be 'reads' or 'bam'")
+BAM_DIR = str(config.get("bam_dir", "input_bam"))
+if INPUT_TYPE == "bam" and os.path.abspath(BAM_DIR) == os.path.abspath("staged_bam"):
+    raise ValueError("bam_dir cannot be staged_bam; input and workflow output must be separate")
+BAM_PATH_PATTERN = "duplicate_removed/{sample}.rmdup.bam" if INPUT_TYPE == "reads" else "staged_bam/{sample}.bam"
+BAM_INDEX_PATTERN = BAM_PATH_PATTERN + ".bai"
+
 def reference_dict(reference):
     return re.sub(r"\.(fa|fasta)$", ".dict", reference)
 
@@ -317,7 +326,7 @@ wildcard_constraints:
 rule all:
     input:
         "reports/precheck.done",
-        "qc/rastqc.done",
+        ["qc/rastqc.done"] if INPUT_TYPE == "reads" else [],
         GVCF_TARGETS,
         "result_vcfs/combined.vcf.gz",
         "result_vcfs/combined.indel.filtered.vcf.gz",
@@ -334,30 +343,31 @@ rule all:
         "reports/ParaChrSNP_report.html",
         "reports/ParaChrSNP_summary.tsv"
 
-include: "rules/precheck.rules"
-include: "rules/bwa_index.rules"
-include: "rules/bwa_mem.rules"
-include: "rules/index_rmdup.rules"
-include: "rules/qc.rules"
-include: "rules/clean_reads.rules"
+include: "rules/precheck_1.rules"
+if INPUT_TYPE == "reads":
+    include: "rules/bwa_index.rules"
+    include: "rules/bwa_mem.rules"
+    include: "rules/qc.rules"
+    include: "rules/clean_reads.rules"
+else:
+    include: "rules/stage_bam_1.rules"
+include: "rules/index_rmdup_1.rules"
 include: "rules/combine_gvcf.rules"
 include: "rules/genomicsdb.rules"
 include: "rules/faidx_index.rules"
-include: "rules/haplo.rules"
-include: "rules/indel_filter.rules"
-include: "rules/indel_select.rules"
+include: "rules/haplo_1.rules"
+include: "rules/variant_filter_1.rules"
 include: "rules/index_combined_vcf.rules"
 include: "rules/joint_calling.rules"
 include: "rules/picard_index.rules"
 include: "rules/samtools_index.rules"
-include: "rules/snp_filter.rules"
-include: "rules/snp_select.rules"
+include: "rules/variant_select_1.rules"
 include: "rules/merge_sample_gvcf.rules"
 include: "rules/get_chr_list.rules"
 include: "rules/vcf_missing.rules"
 include: "rules/vcf_convert.rules"
 include: "rules/imputation.rules"
-include: "rules/cnv.rules"
+include: "rules/cnv_1.rules"
 include: "rules/pi.rules"
 include: "rules/snp_density.rules"
 include: "rules/admixture.rules"
@@ -365,4 +375,4 @@ include: "rules/ld_decay.rules"
 include: "rules/vcf2pca.rules"
 include: "rules/vcf2dis.rules"
 include: "rules/snpeff.rules"
-include: "rules/report.rules"
+include: "rules/report_1.rules"

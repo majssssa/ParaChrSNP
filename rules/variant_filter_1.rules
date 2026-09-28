@@ -1,0 +1,82 @@
+# 修改要求：删除GLnexus联合分型后的二次过滤，仅为GenomicsDB和CombineGVCFs模式保留
+# 原有的GATK SNP和INDEL硬过滤。
+# 原始规则文件：rules/snp_filter_1.rules、rules/indel_filter_1.rules
+
+if JOINT_CALLING_METHOD != "glnexus":
+
+    rule snp_filter:
+        input:
+            vcf="result_vcfs/combined.snp.vcf.gz",
+            ref=config["reference"]
+        output:
+            vcf="result_vcfs/combined.snp.filtered.vcf.gz"
+        log:
+            "logs/gatk/filter/snp.log"
+        params:
+            filters=config["params"]["snp_filter"]["filter_name"],
+            expression=(
+                "QD < {qd} || MQ < {mq} || FS > {fs} || SOR > {sor} || "
+                "MQRankSum < {mq_rank_sum} || ReadPosRankSum < {read_pos_rank_sum}"
+            ).format(**config["params"]["snp_filter"]["thresholds"])
+        shell:
+            """
+            tmp_prefix=$(mktemp -u result_vcfs/combined.snp.marked.tmp.XXXXXX)
+            marked_vcf="$tmp_prefix.vcf.gz"
+            trap 'rm -f "$marked_vcf" "$marked_vcf.tbi" "$marked_vcf.idx"' EXIT
+
+            gatk --java-options "-XX:ActiveProcessorCount=1" VariantFiltration \
+                -R {input.ref} \
+                -V {input.vcf} \
+                --filter-expression "{params.expression}" \
+                --filter-name "{params.filters}" \
+                -O "$marked_vcf" \
+                > {log} 2>&1
+
+            gatk --java-options "-XX:ActiveProcessorCount=1" SelectVariants \
+                -R {input.ref} \
+                -V "$marked_vcf" \
+                --exclude-filtered \
+                -O {output.vcf} \
+                >> {log} 2>&1
+
+            rm -f "$marked_vcf" "$marked_vcf.tbi"
+            """
+
+
+    rule indel_filter:
+        input:
+            vcf="result_vcfs/combined.indel.vcf.gz",
+            ref=config["reference"]
+        output:
+            vcf="result_vcfs/combined.indel.filtered.vcf.gz"
+        log:
+            "logs/gatk/filter/indel.log"
+        params:
+            filters=config["params"]["indel_filter"]["filter_name"],
+            expression=(
+                "QD < {qd} || FS > {fs} || SOR > {sor} || "
+                "MQRankSum < {mq_rank_sum} || ReadPosRankSum < {read_pos_rank_sum}"
+            ).format(**config["params"]["indel_filter"]["thresholds"])
+        shell:
+            """
+            tmp_prefix=$(mktemp -u result_vcfs/combined.indel.marked.tmp.XXXXXX)
+            marked_vcf="$tmp_prefix.vcf.gz"
+            trap 'rm -f "$marked_vcf" "$marked_vcf.tbi" "$marked_vcf.idx"' EXIT
+
+            gatk --java-options "-XX:ActiveProcessorCount=1" VariantFiltration \
+                -R {input.ref} \
+                -V {input.vcf} \
+                --filter-expression "{params.expression}" \
+                --filter-name "{params.filters}" \
+                -O "$marked_vcf" \
+                > {log} 2>&1
+
+            gatk --java-options "-XX:ActiveProcessorCount=1" SelectVariants \
+                -R {input.ref} \
+                -V "$marked_vcf" \
+                --exclude-filtered \
+                -O {output.vcf} \
+                >> {log} 2>&1
+
+            rm -f "$marked_vcf" "$marked_vcf.tbi"
+            """

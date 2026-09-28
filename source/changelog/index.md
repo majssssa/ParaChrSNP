@@ -6,6 +6,12 @@ formal semantic-version release series.
 
 ## 2026-09-28
 
+### Report variant counts
+
+- Count VCF records directly when generating the HTML and TSV reports, so
+  indexes without record-count metadata cannot produce false zero counts.
+- Verified the corrected report with a four-sample BAM-input run.
+
 ### BAM input mode
 
 - Added `Types: reads|bam`, with `reads` as the backward-compatible default.

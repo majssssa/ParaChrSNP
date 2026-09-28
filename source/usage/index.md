@@ -404,4 +404,6 @@ server-side data; it does not upload large sequencing files.
 | `reports/` | Precheck and integrated HTML reports |
 
 The final summary products are `reports/ParaChrSNP_report.html` and
-`reports/ParaChrSNP_summary.tsv`.
+`reports/ParaChrSNP_summary.tsv`. Their VCF variant counts are the numbers of
+non-header records in the corresponding VCF files, counted from the files
+themselves rather than from optional index metadata.

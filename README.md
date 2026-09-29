@@ -14,6 +14,8 @@ population-genomic analyses in a reproducible workflow.
 > examples, command usage, Web interface instructions, output interpretation,
 > changelog, and troubleshooting are maintained in the
 > **[ParaChrSNP Read the Docs documentation](https://parachrsnp.readthedocs.io/en/latest/)**.
+> A **[Chinese documentation site (中文文档)](https://parachrsnp.readthedocs.io/zh-cn/latest/)**
+> is also available.
 
 ## Workflow overview
 
@@ -66,6 +68,8 @@ memory resources.
 
 ## Documentation
 
+- [English documentation](https://parachrsnp.readthedocs.io/en/latest/)
+- [中文文档](https://parachrsnp.readthedocs.io/zh-cn/latest/)
 - [Installation and software download](https://parachrsnp.readthedocs.io/en/latest/installation/index.html)
 - [Quick start](https://parachrsnp.readthedocs.io/en/latest/quick_start/index.html)
 - [Usage and complete configuration](https://parachrsnp.readthedocs.io/en/latest/usage/index.html)

@@ -1,7 +1,13 @@
 # Quick start
 
-This page runs the bundled Arabidopsis example through input checking and the
-complete ParaChrSNP workflow.
+This page runs the Arabidopsis example through input checking and the complete
+ParaChrSNP workflow. Start in the root of a cloned ParaChrSNP repository, with
+Snakemake and Singularity/Apptainer installed. Download the current
+`ParaChrSNP.sif` image as described in [Installation](../installation/index.md)
+and place it in the repository root; it is not included in the Git repository.
+An older local file with the same name may lack samblaster, so verify the
+program versions using the Installation instructions before running. The
+GLnexus executable is downloaded in step 3 below.
 
 ## 1. Download and extract the example
 
@@ -49,56 +55,37 @@ raw_fastq/{sample}.2.fq.gz
 For example, `ERR16804307.1.fq.gz` and `ERR16804307.2.fq.gz` are recognized as
 sample `ERR16804307`.
 
-## 3. Check the complete example configuration
+## 3. Use the complete example configuration
 
-Use the repository's complete `config.test.yaml` for this Arabidopsis example.
-The excerpt below highlights the settings to check; **do not replace the full
-file with this excerpt**. Other required `params` are already present in
-`config.test.yaml`. The regular `config.yaml` contains different, tea-genome
-example values and is not the configuration for this quick start.
+Use the repository's `config.test.yaml` without copying a shortened YAML
+excerpt into a new file. It contains every required workflow parameter, the
+four Arabidopsis samples, the optimized container path, and GLnexus as the
+joint-calling method. The complete, runnable file is shown below and can also
+be downloaded directly:
 
-```yaml
-reference: "reference/Arabidopsis_thaliana.fasta"
-Types: reads
+{download}`Download config.test.yaml <../../config.test.yaml>`
 
-container:
-    image: "ParaChrSNP_samblaster_minibwa0.6.sif"
-
-samples:
-    ERR16804307: "raw_fastq/ERR16804307"
-    ERR16805220: "raw_fastq/ERR16805220"
-    ERR16805679: "raw_fastq/ERR16805679"
-    ERR16806713: "raw_fastq/ERR16806713"
-
-chromosomes:
-  - NC_003070.9
-  - NC_003071.7
-  - NC_003074.8
-  - NC_003075.7
-  - NC_003076.8
-
-params:
-    aligner:
-        name: "minibwa"
-        executable: "minibwa"
-        map_threads: 4
-        sort_threads: 2
-        index_threads: 4
-        index_extra: ""
-        map_extra: ""
-
-    joint_calling:
-        method: "glnexus"
-        glnexus_executable: "scripts/glnexus_cli"
+```{literalinclude} ../../config.test.yaml
+:language: yaml
+:linenos:
 ```
 
-Chromosome names must exactly match the sequence identifiers in the FASTA
-header and index. Place the optimized container at the configured path, and
-[download the GLnexus executable](../installation/index.md)
-before running this configuration. For another species, edit a complete
-configuration file such as `config.yaml` or the
-[full template](../usage/index.md); do not use
-the excerpt above as a standalone YAML file.
+The regular `config.yaml` contains tea-genome example values and must not be
+used for this Arabidopsis quick start. For another species, edit a complete
+configuration file such as `config.yaml` or the [full template](../usage/index.md).
+Chromosome names must exactly match the reference FASTA headers.
+
+Download GLnexus v1.4.1 to the path configured in `config.test.yaml` and make
+it executable.
+
+```bash
+wget -O scripts/glnexus_cli https://github.com/dnanexus-rnd/GLnexus/releases/download/v1.4.1/glnexus_cli
+chmod +x scripts/glnexus_cli
+
+# wget: Download the official GLnexus v1.4.1 release binary.
+# -O scripts/glnexus_cli: Save it at the executable path in config.test.yaml.
+# chmod +x: Allow the downloaded binary to run.
+```
 
 ## 4. Run the precheck
 

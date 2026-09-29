@@ -4,7 +4,7 @@ bam_dir: input_bam
 reference: "reference/Arabidopsis_thaliana.fasta"
 
 container:
-    image: "ParaChrSNP_samblaster_minibwa0.6.sif"
+    image: "ParaChrSNP.sif"
 
 samples:
     ERR16804307: "raw_fastq/ERR16804307"

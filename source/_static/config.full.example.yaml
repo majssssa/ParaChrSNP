@@ -8,7 +8,7 @@ bam_dir: input_bam  # Used only when Types is bam; expects input_bam/{sample}.ba
 reference: "reference/genome.fa"
 
 container:
-    image: "ParaChrSNP_samblaster_minibwa0.6.sif"
+    image: "ParaChrSNP.sif"
 
 # FASTQ prefixes do not include .1.fq.gz or .2.fq.gz.
 # At least three samples are required by the PCA and VCF2Dis modules.

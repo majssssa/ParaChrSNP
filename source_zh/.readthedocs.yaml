@@ -1,0 +1,14 @@
+# 中文站点专用构建配置；路径均相对于仓库根目录。
+version: 2
+
+build:
+  os: ubuntu-24.04
+  tools:
+    python: "3.12"
+
+sphinx:
+  configuration: source_zh/conf.py
+
+python:
+  install:
+    - requirements: source/requirements.txt

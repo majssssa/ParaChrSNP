@@ -118,11 +118,25 @@ named `glnexus_cli` at:
 scripts/glnexus_cli
 ```
 
-Then grant execution permission.
+Download the GLnexus v1.4.1 executable to that location.
+
+```bash
+wget -O scripts/glnexus_cli https://github.com/dnanexus-rnd/GLnexus/releases/download/v1.4.1/glnexus_cli
+
+# wget: Download the executable from the GLnexus GitHub release.
+# -O scripts/glnexus_cli: Save it at the path expected by the workflow.
+# URL: The official GLnexus v1.4.1 release asset for glnexus_cli.
+```
+
+Grant execution permission and check that the downloaded program starts.
 
 ```bash
 chmod +x scripts/glnexus_cli
 scripts/glnexus_cli --help
+
+# chmod +x: Make the downloaded file executable.
+# scripts/glnexus_cli: The executable path configured for GLnexus joint calling.
+# --help: Display the GLnexus command-line help to verify that it starts.
 ```
 
 The executable is deliberately ignored by Git because the distributed binary

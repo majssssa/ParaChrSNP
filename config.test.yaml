@@ -51,7 +51,7 @@ params:
         java_options: "--java-options \"-Xms512m -Xmx128g\""
 
     joint_calling:
-        method: "genomicsdb"
+        method: "glnexus"
         # method可选：genomicsdb、combine_gvcfs或glnexus。
         glnexus_executable: "scripts/glnexus_cli"
         glnexus_config: "gatk"

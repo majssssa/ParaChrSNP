@@ -49,21 +49,26 @@ raw_fastq/{sample}.2.fq.gz
 For example, `ERR16804307.1.fq.gz` and `ERR16804307.2.fq.gz` are recognized as
 sample `ERR16804307`.
 
-## 3. Edit the minimal configuration
+## 3. Check the complete example configuration
 
-At minimum, verify the reference, container, samples, chromosomes, aligner, and
-joint-calling method.
+Use the repository's complete `config.test.yaml` for this Arabidopsis example.
+The excerpt below highlights the settings to check; **do not replace the full
+file with this excerpt**. Other required `params` are already present in
+`config.test.yaml`. The regular `config.yaml` contains different, tea-genome
+example values and is not the configuration for this quick start.
 
 ```yaml
 reference: "reference/Arabidopsis_thaliana.fasta"
 Types: reads
 
 container:
-    image: "ParaChrSNP.sif"
+    image: "ParaChrSNP_samblaster_minibwa0.6.sif"
 
 samples:
     ERR16804307: "raw_fastq/ERR16804307"
     ERR16805220: "raw_fastq/ERR16805220"
+    ERR16805679: "raw_fastq/ERR16805679"
+    ERR16806713: "raw_fastq/ERR16806713"
 
 chromosomes:
   - NC_003070.9
@@ -83,11 +88,17 @@ params:
         map_extra: ""
 
     joint_calling:
-        method: "genomicsdb"
+        method: "glnexus"
+        glnexus_executable: "scripts/glnexus_cli"
 ```
 
 Chromosome names must exactly match the sequence identifiers in the FASTA
-header and index.
+header and index. Place the optimized container at the configured path, and
+[download the GLnexus executable](../installation/index.md)
+before running this configuration. For another species, edit a complete
+configuration file such as `config.yaml` or the
+[full template](../usage/index.md); do not use
+the excerpt above as a standalone YAML file.
 
 ## 4. Run the precheck
 
@@ -96,14 +107,14 @@ Validate the configuration and input files before starting expensive jobs.
 ```bash
 snakemake \
     --snakefile Snakefile \
-    --configfile config.yaml \
+    --configfile config.test.yaml \
     --cores 1 \
     --use-singularity \
     reports/precheck.done
 ```
 
 - `--snakefile Snakefile`: selects the workflow entry point.
-- `--configfile config.yaml`: selects the analysis configuration.
+- `--configfile config.test.yaml`: selects the complete Arabidopsis example configuration.
 - `--cores 1`: allocates one core to the precheck target.
 - `--use-singularity`: runs containerized rules with `container.image`.
 - `reports/precheck.done`: requests only the precheck target.
@@ -123,7 +134,7 @@ Build and inspect the complete job graph without executing it.
 ```bash
 snakemake \
     --snakefile Snakefile \
-    --configfile config.yaml \
+    --configfile config.test.yaml \
     --cores 64 \
     --use-singularity \
     --dry-run
@@ -139,7 +150,7 @@ Start the complete analysis.
 ```bash
 snakemake \
     --snakefile Snakefile \
-    --configfile config.yaml \
+    --configfile config.test.yaml \
     --cores 64 \
     --use-singularity \
     --keep-going \

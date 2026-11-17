@@ -70,6 +70,16 @@ Actual runtime depends on sample number, read length, storage performance,
 selected joint-calling method, enabled optional modules, and available CPU and
 memory resources.
 
+## Changelog
+
+### v0.1.1
+
+- Added an independent VCF-only downstream workflow and configuration.
+- Improved input validation and preserved full sample names in distance trees.
+- Added English and Chinese downstream analysis tutorials.
+
+[Full changelog](https://parachrsnp.readthedocs.io/en/latest/changelog/index.html)
+
 ## Documentation
 
 - [English documentation](https://parachrsnp.readthedocs.io/en/latest/)

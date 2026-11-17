@@ -1,114 +1,55 @@
-# VCF-only downstream analysis (v0.1.1)
+# VCF-only downstream analysis
 
-`Snakefile.downstream` starts from an existing genotyped cohort VCF. It is an
-independent workflow, not an input-mode switch in the variant-calling pipeline.
-Its configuration contains no alignment, BAM-processing or variant-calling
-settings. The original `Snakefile` remains the FASTQ/BAM entry point.
+Use `Snakefile.downstream` to run downstream analyses from an existing cohort
+VCF, without repeating alignment or variant calling.
 
-## Input and configuration
+## Configure
 
-{download}`Download the complete downstream configuration <../../config.downstream.example.yaml>`
+{download}`Download the complete configuration <../../config.downstream.example.yaml>`
 
-Use `.vcf` or `.vcf.gz` containing uniquely named samples and FORMAT/GT.
-The matching reference FASTA is required. Sample IDs are inferred from the VCF
-header; no `Types`, `samples` or `chromosomes` settings are needed.
-Precheck rejects missing headers, duplicate sample IDs, missing GT declarations
-or records, gVCF reference-block alleles and record contigs absent from the FASTA.
-Contig-name validation does not prove sequence identity with the reference.
+Edit `config.downstream.example.yaml` and set `input_vcf`, `reference` and
+`container.image` to your VCF, matching reference FASTA and container image.
+Run commands from the repository root. Input files must not share the workflow's
+output paths under `result_vcfs/`.
 
-The default targets are missingness, PLINK binary/text and HapMap conversion,
-PCA, genetic distances/tree, and HTML/TSV reporting. PCA/tree require at least
-three samples. Other modules are disabled in the release template. Enable
-`params.imputation`, `pi`, `snp_density`, `admixture`, `ld_decay` or `snpeff` with
-their `enabled` settings as needed; annotation requires matching FASTA/GFF
-resources. Set ADMIXTURE's K range and cross-validation for your sample count.
-See [optional modules](optional_modules.md) for resource requirements.
-VCF-only analysis cannot run BAM-based CNVnator.
+The input may be `.vcf` or `.vcf.gz` and must contain GT genotypes.
+Sample names are read automatically; no separate sample list is needed.
+PCA and tree analysis require at least three samples.
 
-## Keep existing results separate
+The default analyses are missingness, PLINK/HapMap conversion, PCA,
+genetic distances/tree and a summary report. Enable ADMIXTURE, LD decay,
+nucleotide diversity, SNP density, imputation or annotation through the
+corresponding `params.*.enabled` settings.
+See [optional modules](optional_modules.md) for details.
 
-Run the following setup from the cloned repository root. Keep the repository's
-`rules/` and `scripts/`; the two entry/config files are not a standalone package.
+## Run
 
-Create a new working directory and copy the complete configuration.
+Check the configuration and task graph.
 
 ```bash
-mkdir -p downstream_run
-cp config.downstream.example.yaml downstream_run/config.yaml
-ln -s "$PWD/scripts" downstream_run/scripts
-# mkdir -p: create the output directory if necessary.
-# cp: copy the complete template for local editing.
-# ln -s: expose the repository's scripts in the new working directory.
-# $PWD: the absolute repository root; run setup from that directory.
-```
-
-Edit `downstream_run/config.yaml`: set the top-level `input_vcf`, `reference`
-and `container.image` to **absolute paths** to your files. Paths are otherwise
-resolved relative to the working directory. Keep the module output paths
-relative so they remain inside `downstream_run`. Update any population-file,
-annotation or Beagle resource paths if those modules are enabled.
-
-The input can be an existing `result_vcfs/combined.snp.filtered.vcf.gz` in the
-original project because outputs now go into the separate working directory.
-Do not use the same file as both input and workflow output; the workflow rejects
-that collision rather than overwriting the input.
-
-## Check and run
-
-Validate the task graph after editing the configuration.
-
-```bash
-env TMPDIR=/tmp snakemake --snakefile Snakefile.downstream \
-  --configfile downstream_run/config.yaml --directory downstream_run \
-  --cores 1 -n
-# TMPDIR=/tmp: use an accessible temporary directory.
-# --snakefile: select the independent downstream entry.
+snakemake --snakefile Snakefile.downstream --configfile config.downstream.example.yaml --cores 1 -n
+# --snakefile: select the independent downstream workflow.
 # --configfile: load the edited complete configuration.
-# --directory: place outputs in the separate working directory.
-# --cores 1: allocate one core for validation.
-# -n: construct the DAG without executing jobs; content precheck runs later.
+# --cores 1: use one core for the check.
+# -n: inspect the task graph without running jobs.
 ```
 
-Run the enabled analyses with explicit container bindings and environment isolation.
+Run the enabled analyses.
 
 ```bash
-env TMPDIR=/tmp snakemake --snakefile Snakefile.downstream \
-  --configfile downstream_run/config.yaml --directory downstream_run \
-  --cores 8 --use-singularity --rerun-incomplete \
-  --singularity-args "--cleanenv --bind $PWD:$PWD --env TMPDIR=/tmp --env PYTHONNOUSERSITE=1 --env R_ENVIRON_USER=/dev/null --env R_PROFILE_USER=/dev/null --env R_LIBS_USER=/nonexistent"
-# --cores 8: allow eight CPU threads across concurrent jobs.
-# --use-singularity: use the configured Singularity/Apptainer image per rule.
-# --rerun-incomplete: rerun interrupted/incomplete jobs.
-# --singularity-args: forward the following options to the container runtime.
-# --cleanenv: avoid inheriting unrelated host environment variables.
-# --bind $PWD:$PWD: expose the repository at the same path inside the container.
-# --env TMPDIR=/tmp: choose a container-visible temporary directory.
-# --env PYTHONNOUSERSITE=1: disable host Python user packages.
-# --env R_ENVIRON_USER=/dev/null: skip the host R user environment file.
-# --env R_PROFILE_USER=/dev/null: skip the host R user startup script.
-# --env R_LIBS_USER=/nonexistent: exclude host R user libraries.
-# --snakefile, --configfile and --directory: same meanings as in the dry-run.
+snakemake --snakefile Snakefile.downstream --configfile config.downstream.example.yaml --cores 8 --use-singularity
+# --snakefile: select the independent downstream workflow.
+# --configfile: load the edited complete configuration.
+# --cores 8: allow up to eight CPU threads.
+# --use-singularity: use the configured container.
 ```
 
-Bind external input/reference/annotation directories too, for example by adding
-`--bind /data:/data` inside `--singularity-args` when those files are under
-`/data`. Absolute paths alone do not make host files visible in the container.
-`No such file or directory` from faidx usually indicates a missing bind;
-`mkdtemp ... failed` can indicate an inaccessible temporary directory.
+## Results
 
-## Results and rerunning
+Open `reports/ParaChrSNP_report.html` for the report and figures.
+Summary metrics are in `reports/ParaChrSNP_summary.tsv`.
+Individual analyses write to their configured output directories.
 
-The original VCF is preserved. A sorted BGZF copy is staged under
-`downstream_run/result_vcfs/`. SNP analyses retain biallelic SNP records whose
-FILTER is `PASS` or `.`; INDEL records with those FILTER values are exported
-separately. No additional GATK hard filters are applied. A SNP-only input may
-therefore produce an empty INDEL file. Multiallelic SNPs are excluded, not split.
-
-Open `downstream_run/reports/ParaChrSNP_report.html` for results and figures;
-the companion `ParaChrSNP_summary.tsv` contains summary metrics. Read QC and
-read-derived sequencing depth are unavailable in VCF mode. Tree/matrix outputs
-retain the full sample names, including names longer than ten characters.
-
-Rerun the same command to resume failed jobs; completed outputs are reused.
-Removing only the final report outputs rebuilds the report without rerunning
-completed analyses. Start a new working directory when changing datasets.
+The original VCF is preserved. SNP analyses use biallelic records with FILTER
+`PASS` or `.`; multiallelic SNPs are excluded. Read-based QC and sequencing
+depth are unavailable when starting from VCF.

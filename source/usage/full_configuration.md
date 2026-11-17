@@ -2,21 +2,8 @@
 
 ## Existing VCF input
 
-Use the versioned `Snakefile.downstream` entry point with `config.downstream.example.yaml`. Set `input_vcf`, the matching reference FASTA and your container image. This configuration contains only VCF preparation and downstream analysis settings. Samples are inferred from the VCF header. The workflow skips read processing and variant calling, then runs format conversion, missingness, PCA/tree analysis and any enabled downstream modules. Run in a separate analysis directory to avoid reusing previous outputs.
-
-Validate the task graph before running the analysis.
-
-```bash
-snakemake --snakefile Snakefile.downstream --configfile config.downstream.example.yaml --cores 1 -n
-snakemake --snakefile Snakefile.downstream --configfile config.downstream.example.yaml --cores 8 --use-singularity
-# --snakefile Snakefile.downstream: selects the workflow with VCF input support.
-# --configfile config.downstream.example.yaml: specifies input and downstream configuration.
-# --cores: limits the total CPU thread allocation.
-# -n: validates the DAG without executing jobs.
-# --use-singularity: uses the configured container image.
-```
-
-Supply a genotyped VCF, not gVCF reference blocks. The original input is preserved. Analysis SNPs are biallelic records with FILTER PASS or `.`; INDELs with these FILTER values are exported separately. No GATK hard filtering is applied. PCA/tree analysis require at least three samples. CNVnator requires BAM files and cannot run in this mode. Annotation and imputation retain their existing additional resource requirements. Read QC/depth are unavailable in VCF-only reports.
+For an existing cohort VCF, see the [downstream analysis guide](downstream.md).
+The complete configuration below is for the original variant-calling workflow.
 
 The complete example below contains the core workflow settings and all nine
 optional analysis modules. Every optional module is set to `enabled: true` to

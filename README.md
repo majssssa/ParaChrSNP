@@ -44,6 +44,7 @@ large intermediate SAM file.
 - GenomicsDB, GLnexus, and legacy CombineGVCFs joint-calling modes.
 - Containerized execution with Singularity or Apptainer.
 - Configurable GATK hard filtering for SNPs and INDELs.
+- Independent downstream analysis from an existing cohort VCF.
 - Missingness assessment and PLINK/HapMap format conversion.
 - Optional Beagle imputation and SnpEff functional annotation.
 - Optional CNVnator read-depth CNV detection.
@@ -86,28 +87,6 @@ The source repository is hosted at
 Please follow the installation documentation for the current source,
 container, dependencies, and example dataset instead of relying on copied or
 outdated commands.
-
-## Start From an Existing VCF
-
-Follow the step-by-step [English tutorial](https://parachrsnp.readthedocs.io/en/latest/usage/downstream.html)
-or [中文教程](https://parachrsnp.readthedocs.io/zh-cn/latest/usage/downstream.html)
-for a separate working directory and the tested container bindings.
-
-The independent entry point `Snakefile.downstream` runs only downstream analyses from an existing VCF. Copy and edit `config.downstream.example.yaml`: set `input_vcf` to a genotyped cohort `.vcf` or `.vcf.gz`, `reference` to the matching FASTA, and `container.image` to your installed image. Sample IDs are read automatically from the VCF header. Use a separate working directory from previous analyses to avoid reusing unrelated outputs.
-
-Validate the VCF-only task graph, then run the downstream workflow.
-
-```bash
-snakemake --snakefile Snakefile.downstream --configfile config.downstream.example.yaml --cores 1 -n
-snakemake --snakefile Snakefile.downstream --configfile config.downstream.example.yaml --cores 8 --use-singularity
-# --snakefile Snakefile.downstream: selects the versioned workflow with VCF support.
-# --configfile config.downstream.example.yaml: supplies the VCF, reference and downstream settings.
-# --cores: limits the total available CPU threads.
-# -n: checks the task graph without executing jobs.
-# --use-singularity: runs tools with the configured container.
-```
-
-VCF mode skips read QC, alignment, BAM processing and variant calling. It sorts and BGZF-compresses a copy of the input without changing the original. Downstream SNP analyses use biallelic SNP records with FILTER `PASS` or `.`; INDEL records with these FILTER values are also exported. No additional GATK hard filters are applied. The input must contain GT genotypes, not gVCF reference blocks. PCA/tree analysis require at least three samples. Enable ADMIXTURE, LD decay, nucleotide diversity, SNP density, Beagle imputation or SnpEff annotation through their existing `params.*.enabled` settings; annotation requires matching annotation resources. BAM-based CNV detection is not part of this standalone workflow. Read-based QC/depth metrics are reported as unavailable. Reports are written to `reports/ParaChrSNP_report.html` and `reports/ParaChrSNP_summary.tsv`.
 
 ## Contact
 

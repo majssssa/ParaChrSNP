@@ -3,7 +3,8 @@
 project = "ParaChrSNP"
 copyright = "2026, Junpeng Ma"
 author = "Junpeng Ma 1527552938@qq.com"
-release = "1.0.0"
+version = "0.1.1"
+release = "0.1.1"
 
 extensions = ["myst_parser"]
 myst_enable_extensions = ["colon_fence", "deflist"]

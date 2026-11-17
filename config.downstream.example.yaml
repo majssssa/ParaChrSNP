@@ -1,0 +1,116 @@
+# ParaChrSNP 独立下游分析示例配置；在仓库根目录执行，路径相对此目录。
+# 原始配置：config.downstream.yaml；发布示例只包含 VCF 输入和下游分析参数。
+# 将 input_vcf、reference 和容器路径替换为自己的文件。
+# 不要将输入 VCF 放在本流程 result_vcfs 输出路径下。
+input_vcf: "input_vcf/cohort.vcf.gz"
+
+reference: "reference/genome.fasta"
+
+container:
+    image: "ParaChrSNP.sif"
+
+params:
+    vcf_missing:
+        output_prefix: "missing/combined.snp.filtered"
+        plot_prefix: "missing/combined.snp.filtered.miss_check"
+        plot_script: "scripts/plink-missing-nature_1.R"
+        threads: 4
+        extra: "--allow-extra-chr"
+
+    vcf_convert:
+        input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
+        output_prefix: "format_convert/combined.snp.filtered"
+        plink_extra: "--allow-extra-chr"
+        plink_threads: 4
+        tassel_executable: "run_pipeline.pl"
+        tassel_memory: "-Xmx10g"
+        tassel_threads: 16
+        tassel_extra: ""
+
+    imputation:
+        enabled: false
+        input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
+        output_prefix: "imputation/combined.snp.filtered.beagle"
+        jar: ""
+        java_options: "-Xmx4g"
+        threads: 4
+        extra: ""
+
+    pi:
+        enabled: false
+        input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
+        pop_info: ""
+        output_dir: "pi"
+        window_size: 100000
+        window_step: 10000
+        extra: ""
+
+    snp_density:
+        enabled: false
+        input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
+        output_dir: "snp_density"
+        window_size: 1000000
+
+    admixture:
+        enabled: false
+        input_prefix: "format_convert/combined.snp.filtered"
+        output_dir: "admixture"
+        executable: "admixture"
+        k_min: 1
+        k_max: 10
+        cv: 10
+        threads: 4
+        prune_window: 50
+        prune_step: 10
+        prune_r2: 0.2
+        geno: 0.999
+        pop_info: ""
+        show_sample_names: true
+        plink_extra: "--allow-extra-chr"
+        normalize_extra: "--allow-extra-chr --set-missing-var-ids @:#"
+        admixture_plink_extra: "--allow-extra-chr 0"
+        extra: ""
+
+    ld_decay:
+        enabled: false
+        input_vcf: "result_vcfs/combined.snp.filtered.vcf.gz"
+        pop_info: ""
+        output_dir: "ld_decay"
+        executable: "PopLDdecay"
+        max_dist: 300
+        threads: 1
+        extra: ""
+
+    vcf2pca:
+        enabled: true
+        executable: "VCF2PCACluster"
+        sample_group: ""
+        output_prefix: "pca/ParaChrSNP"
+        threads: 4
+        extra: ""
+
+    vcf2dis:
+        enabled: true
+        executable: "VCF2Dis"
+        sample_group: ""
+        output_matrix: "dis/ParaChrSNP.p_dis.mat"
+        output_tree: "dis/ParaChrSNP.p_dis.nwk"
+        tree_method: 1
+        extra: ""
+
+    snpeff:
+        enabled: false
+        annotate_snp: true
+        annotate_indel: false
+        executable: "snpEff"
+        genome_name: "custom_genome"
+        data_dir: "annotation/snpeff_data"
+        config_file: "annotation/snpeff.config"
+        genome_fasta: "reference/genome.fasta"
+        annotation_file: "annotation/genes.gff3"
+        annotation_format: "gff3"
+        output_prefix: "annotation/combined"
+        database_done: "annotation/snpeff_db.done"
+        java_options: "-Xmx8g"
+        threads: 1
+        extra: ""

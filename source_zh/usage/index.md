@@ -1,5 +1,8 @@
 # 使用指南
 
+已有 VCF 时，请使用 v0.1.1 新增的[独立下游分析教程](downstream.md)，
+无需配置或执行上游变异检测。
+
 ParaChrSNP 根据配置中的样本、染色体、输入类型和模块开关生成 Snakemake 任务图。**必须提供完整配置文件**；只复制某个 `params` 片段会造成 `KeyError`。拟南芥示例使用 `config.test.yaml`，其他项目可从[完整模板](full_configuration.md)复制后修改。
 
 ## 输入类型与文件命名
@@ -99,6 +102,7 @@ sample3    Population_B
 
 optional_modules
 full_configuration
+downstream
 ```
 
 ## 运行与检查

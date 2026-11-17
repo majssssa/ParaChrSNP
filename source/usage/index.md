@@ -1,5 +1,8 @@
 # Usage
 
+Starting from an existing VCF? Use the independent
+[VCF-only downstream tutorial](downstream.md), introduced in v0.1.1.
+
 ParaChrSNP is controlled through `config.yaml`. The workflow reads the sample
 list and chromosome list from this file, constructs a Snakemake DAG, and runs
 each rule in the configured Singularity/Apptainer container.
@@ -310,6 +313,7 @@ Sample identifiers must match those in `samples` and the VCF header.
 
 optional_modules
 full_configuration
+downstream
 ```
 
 ## Running selected targets

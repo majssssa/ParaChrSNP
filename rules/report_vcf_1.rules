@@ -1,0 +1,26 @@
+# 原始规则：rules/report_3.rules；独立报告只依赖 VCF 和下游结果。
+rule report:
+    input:
+        config_file="reports/vcf.config.yaml",
+        precheck="reports/precheck.done",
+        vcf="result_vcfs/combined.vcf.gz",
+        snp="result_vcfs/combined.snp.filtered.vcf.gz",
+        indel="result_vcfs/combined.indel.filtered.vcf.gz",
+        missing_sample=config["params"]["vcf_missing"]["plot_prefix"] + ".sample_missing.pdf",
+        missing_variant=config["params"]["vcf_missing"]["plot_prefix"] + ".Variant_missing.pdf",
+        formats=[config["params"]["vcf_convert"]["output_prefix"] + suffix for suffix in [".bed", ".bim", ".fam", ".ped", ".map", ".hmp.txt"]],
+        reference=config["reference"],
+        reference_fai=config["reference"] + ".fai",
+        script="scripts/parachrsnp-report_7.py",
+        optional=lambda wildcards: OPTIONAL_TARGETS
+    output:
+        html="reports/ParaChrSNP_report.html",
+        tsv="reports/ParaChrSNP_summary.tsv"
+    log:
+        "logs/report/report.log"
+    shell:
+        """
+        mkdir -p reports logs/report
+        python3 {input.script:q} --config {input.config_file:q} \
+            --out-html {output.html:q} --out-tsv {output.tsv:q} > {log:q} 2>&1
+        """

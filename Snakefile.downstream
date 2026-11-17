@@ -1,0 +1,271 @@
+# 独立下游发布入口；原始脚本：Snakefile.vcf_2。
+# 修改要求：提供固定发布文件名，搭配不含本机路径的下游示例配置。
+# 修改要求：补充输入内容校验，拒绝 gVCF 参考区块和不匹配参考的记录。
+# 修改要求：通过新版本距离规则修复长样本名被替换的问题。
+# 修改要求：只接收已有 VCF，不包含上游检测规则和配置依赖。
+ACTIVE_CONFIGFILE = workflow.overwrite_configfiles[0] if workflow.overwrite_configfiles else "config.downstream.example.yaml"
+configfile: ACTIVE_CONFIGFILE
+
+import os
+import gzip
+import re
+
+container: config.get("container", {}).get("image", "ParaChrSNP.sif")
+
+# 仅在运行时供预检快照与报告使用；用户无需配置输入模式或样本清单。
+config["Types"] = "vcf"
+VCF_INPUT = str(config.get("input_vcf", ""))
+if not os.path.isfile(VCF_INPUT):
+    raise ValueError("Provide an existing input_vcf (.vcf or .vcf.gz)")
+reserved_vcfs = ["result_vcfs/combined.vcf.gz", "result_vcfs/combined.snp.filtered.vcf.gz",
+                 "result_vcfs/combined.indel.filtered.vcf.gz"]
+if os.path.realpath(VCF_INPUT) in [os.path.realpath(path) for path in reserved_vcfs]:
+    raise ValueError("input_vcf must be separate from workflow VCF outputs; use a new working directory")
+# 从 VCF 表头读取样本及参考序列名称。
+opener = gzip.open if VCF_INPUT.endswith(".gz") else open
+vcf_contigs = []
+has_gt = False
+with opener(VCF_INPUT, "rt") as handle:
+    for line in handle:
+        if line.startswith("##contig=<ID="):
+            vcf_contigs.append(line.split("ID=", 1)[1].split(",", 1)[0].split(">", 1)[0])
+        if line.startswith("##FORMAT=<ID=GT,"):
+            has_gt = True
+        if line.startswith("#CHROM\t"):
+            names = line.rstrip().split("\t")[9:]
+            if not names or len(names) != len(set(names)):
+                raise ValueError("VCF requires genotyped samples with unique sample IDs")
+            config["samples"] = dict.fromkeys(names, "")
+            config["chromosomes"] = vcf_contigs
+            break
+    else:
+        raise ValueError("VCF is missing the #CHROM header")
+if not has_gt:
+    raise ValueError("VCF requires a FORMAT/GT genotype declaration")
+
+OPTIONAL_TARGETS = []
+
+# SnpEff 规则使用此公共函数约束 Java 线程；不依赖其他流程入口。
+def java_options_with_active_processors(java_options, threads=1):
+    options = str(java_options).strip()
+    if "-XX:ActiveProcessorCount" in options:
+        return options
+    active_option = f"-XX:ActiveProcessorCount={int(threads)}"
+    match = re.search(r'--java-options\s+(["\'])(.*?)\1', options)
+    if match:
+        quote = match.group(1)
+        current = match.group(2).strip()
+        replacement = f"--java-options {quote}{current} {active_option}{quote}"
+        return options[:match.start()] + replacement + options[match.end():]
+    return f"{active_option} {options}".strip()
+
+SNPEFF_CONFIG = config["params"].setdefault("snpeff", {})
+SNPEFF_CONFIG.setdefault("enabled", False)
+SNPEFF_CONFIG.setdefault("annotate_snp", True)
+SNPEFF_CONFIG.setdefault("annotate_indel", False)
+SNPEFF_CONFIG.setdefault("executable", "snpEff")
+SNPEFF_CONFIG.setdefault("genome_name", "custom_genome")
+SNPEFF_CONFIG.setdefault("data_dir", "annotation/snpeff_data")
+SNPEFF_CONFIG.setdefault("config_file", "annotation/snpeff.config")
+SNPEFF_CONFIG.setdefault("genome_fasta", config["reference"])
+SNPEFF_CONFIG.setdefault("annotation_file", "annotation/genes.gff3")
+SNPEFF_CONFIG.setdefault("annotation_format", "gff3")
+SNPEFF_CONFIG.setdefault("output_prefix", "annotation/combined")
+SNPEFF_CONFIG.setdefault("database_done", "annotation/snpeff_db.done")
+SNPEFF_CONFIG.setdefault("java_options", "-Xmx8g")
+SNPEFF_CONFIG.setdefault("build_check_options", "-noCheckCds -noCheckProtein")
+SNPEFF_CONFIG.setdefault("extra", "")
+
+IMPUTATION_CONFIG = config["params"].setdefault("imputation", {})
+IMPUTATION_CONFIG.setdefault("enabled", False)
+IMPUTATION_CONFIG.setdefault("input_vcf", "result_vcfs/combined.snp.filtered.vcf.gz")
+IMPUTATION_CONFIG.setdefault("output_prefix", "imputation/combined.snp.filtered.beagle")
+IMPUTATION_CONFIG.setdefault("jar", "")
+IMPUTATION_CONFIG.setdefault("java_options", "-Xmx4g")
+IMPUTATION_CONFIG.setdefault("threads", 4)
+IMPUTATION_CONFIG.setdefault("extra", "")
+
+PI_CONFIG = config["params"].setdefault("pi", {})
+PI_CONFIG.setdefault("enabled", False)
+PI_CONFIG.setdefault("input_vcf", "result_vcfs/combined.snp.filtered.vcf.gz")
+PI_CONFIG.setdefault("pop_info", "")
+PI_CONFIG.setdefault("output_dir", "pi")
+PI_CONFIG.setdefault("window_size", 100000)
+PI_CONFIG.setdefault("window_step", 10000)
+PI_CONFIG.setdefault("extra", "")
+
+SNP_DENSITY_CONFIG = config["params"].setdefault("snp_density", {})
+SNP_DENSITY_CONFIG.setdefault("enabled", False)
+SNP_DENSITY_CONFIG.setdefault("input_vcf", "result_vcfs/combined.snp.filtered.vcf.gz")
+SNP_DENSITY_CONFIG.setdefault("output_dir", "snp_density")
+SNP_DENSITY_CONFIG.setdefault("window_size", 1000000)
+
+ADMIXTURE_CONFIG = config["params"].setdefault("admixture", {})
+ADMIXTURE_CONFIG.setdefault("enabled", False)
+ADMIXTURE_CONFIG.setdefault("input_prefix", config["params"]["vcf_convert"]["output_prefix"])
+ADMIXTURE_CONFIG.setdefault("output_dir", "admixture")
+ADMIXTURE_CONFIG.setdefault("executable", "admixture")
+ADMIXTURE_CONFIG.setdefault("k_min", 1)
+ADMIXTURE_CONFIG.setdefault("k_max", 10)
+ADMIXTURE_CONFIG.setdefault("cv", 10)
+ADMIXTURE_CONFIG.setdefault("threads", 4)
+ADMIXTURE_CONFIG.setdefault("prune_window", 50)
+ADMIXTURE_CONFIG.setdefault("prune_step", 10)
+ADMIXTURE_CONFIG.setdefault("prune_r2", 0.2)
+ADMIXTURE_CONFIG.setdefault("geno", 0.999)
+ADMIXTURE_CONFIG.setdefault("pop_info", "")
+ADMIXTURE_CONFIG.setdefault("show_sample_names", False)
+ADMIXTURE_CONFIG.setdefault("plink_extra", config["params"]["vcf_convert"].get("plink_extra", "--allow-extra-chr"))
+ADMIXTURE_CONFIG.setdefault("normalize_extra", "--allow-extra-chr --set-missing-var-ids @:#")
+ADMIXTURE_CONFIG.setdefault("admixture_plink_extra", "--allow-extra-chr 0")
+ADMIXTURE_CONFIG.setdefault("extra", "")
+if int(ADMIXTURE_CONFIG["k_min"]) > int(ADMIXTURE_CONFIG["k_max"]):
+    raise ValueError("params.admixture.k_min must be <= params.admixture.k_max")
+
+LD_DECAY_CONFIG = config["params"].setdefault("ld_decay", {})
+LD_DECAY_CONFIG.setdefault("enabled", False)
+LD_DECAY_CONFIG.setdefault("input_vcf", "result_vcfs/combined.snp.filtered.vcf.gz")
+LD_DECAY_CONFIG.setdefault("pop_info", "")
+LD_DECAY_CONFIG.setdefault("output_dir", "ld_decay")
+LD_DECAY_CONFIG.setdefault("executable", "PopLDdecay")
+LD_DECAY_CONFIG.setdefault("max_dist", 300)
+LD_DECAY_CONFIG.setdefault("threads", 1)
+LD_DECAY_CONFIG.setdefault("extra", "")
+
+if config["params"].get("imputation", {}).get("enabled", False):
+    IMPUTATION_PREFIX = config["params"]["imputation"].get(
+        "output_prefix",
+        "imputation/combined.snp.filtered.beagle",
+    )
+    OPTIONAL_TARGETS.extend([
+        IMPUTATION_PREFIX + ".vcf.gz",
+        IMPUTATION_PREFIX + ".vcf.gz.tbi",
+    ])
+
+if PI_CONFIG.get("enabled", False):
+    PI_OUTPUT_DIR = PI_CONFIG.get("output_dir", "pi")
+    OPTIONAL_TARGETS.extend([
+        PI_OUTPUT_DIR + "/combined.windowed.pi.tsv",
+        PI_OUTPUT_DIR + "/pi.summary.tsv",
+        PI_OUTPUT_DIR + "/figures/pi_manhattan.pdf",
+        PI_OUTPUT_DIR + "/figures/pi_manhattan.png",
+        PI_OUTPUT_DIR + "/figures/pi_manhattan.svg",
+        PI_OUTPUT_DIR + "/figures/pi_manhattan.tiff",
+    ])
+
+if SNP_DENSITY_CONFIG.get("enabled", False):
+    SNP_DENSITY_OUTPUT_DIR = SNP_DENSITY_CONFIG.get("output_dir", "snp_density")
+    OPTIONAL_TARGETS.extend([
+        SNP_DENSITY_OUTPUT_DIR + "/snp_density.tsv",
+        SNP_DENSITY_OUTPUT_DIR + "/figures/snp_density.pdf",
+        SNP_DENSITY_OUTPUT_DIR + "/figures/snp_density.png",
+        SNP_DENSITY_OUTPUT_DIR + "/figures/snp_density.svg",
+        SNP_DENSITY_OUTPUT_DIR + "/figures/snp_density.tiff",
+    ])
+
+if ADMIXTURE_CONFIG.get("enabled", False):
+    ADMIXTURE_OUTPUT_DIR = ADMIXTURE_CONFIG.get("output_dir", "admixture")
+    ADMIXTURE_K_VALUES = list(range(int(ADMIXTURE_CONFIG.get("k_min", 1)), int(ADMIXTURE_CONFIG.get("k_max", 10)) + 1))
+    OPTIONAL_TARGETS.extend([
+        ADMIXTURE_OUTPUT_DIR + "/pruned/admixture_pruned.bed",
+        ADMIXTURE_OUTPUT_DIR + "/pruned/admixture_pruned.bim",
+        ADMIXTURE_OUTPUT_DIR + "/pruned/admixture_pruned.fam",
+        ADMIXTURE_OUTPUT_DIR + "/cv_errors.tsv",
+        ADMIXTURE_OUTPUT_DIR + "/figures/admixture_structure.pdf",
+        ADMIXTURE_OUTPUT_DIR + "/figures/admixture_structure.png",
+        ADMIXTURE_OUTPUT_DIR + "/figures/admixture_structure.svg",
+        ADMIXTURE_OUTPUT_DIR + "/figures/admixture_structure.tiff",
+        ADMIXTURE_OUTPUT_DIR + "/figures/admixture_cv_error.pdf",
+        ADMIXTURE_OUTPUT_DIR + "/figures/admixture_cv_error.png",
+        ADMIXTURE_OUTPUT_DIR + "/figures/admixture_cv_error.svg",
+        ADMIXTURE_OUTPUT_DIR + "/figures/admixture_cv_error.tiff",
+    ])
+    OPTIONAL_TARGETS.extend(expand(ADMIXTURE_OUTPUT_DIR + "/admixture_pruned.{k}.Q", k=ADMIXTURE_K_VALUES))
+
+if LD_DECAY_CONFIG.get("enabled", False):
+    LD_DECAY_OUTPUT_DIR = LD_DECAY_CONFIG.get("output_dir", "ld_decay")
+    OPTIONAL_TARGETS.extend([
+        LD_DECAY_OUTPUT_DIR + "/combined.ld_decay.tsv",
+        LD_DECAY_OUTPUT_DIR + "/figures/ld_decay.pdf",
+        LD_DECAY_OUTPUT_DIR + "/figures/ld_decay.png",
+        LD_DECAY_OUTPUT_DIR + "/figures/ld_decay.svg",
+        LD_DECAY_OUTPUT_DIR + "/figures/ld_decay.tiff",
+    ])
+
+if config["params"]["vcf2pca"].get("enabled", True) and len(config["samples"]) >= 3:
+    PCA_PLOT_PREFIX = config["params"]["vcf2pca"].get(
+        "plot_prefix",
+        config["params"]["vcf2pca"]["output_prefix"] + ".plot",
+    )
+    OPTIONAL_TARGETS.extend([
+        config["params"]["vcf2pca"]["output_prefix"] + ".eigenvec",
+        config["params"]["vcf2pca"]["output_prefix"] + ".eigenval",
+        PCA_PLOT_PREFIX + ".C.PC1_PC2.p.svg",
+        PCA_PLOT_PREFIX + ".N.PC1_PC2.p.svg",
+        PCA_PLOT_PREFIX + ".C.PC1_PC2.p.png",
+        PCA_PLOT_PREFIX + ".N.PC1_PC2.p.png",
+        PCA_PLOT_PREFIX + ".C.3DPC1PC2PC3.pdf",
+        PCA_PLOT_PREFIX + ".N.3DPC1PC2PC3.pdf",
+        PCA_PLOT_PREFIX + ".C.3DPC1PC2PC3.png",
+        PCA_PLOT_PREFIX + ".N.3DPC1PC2PC3.png",
+        PCA_PLOT_PREFIX + ".C.3DPC1PC2PC3.svg",
+        PCA_PLOT_PREFIX + ".N.3DPC1PC2PC3.svg",
+    ])
+
+if config["params"]["vcf2dis"].get("enabled", True) and len(config["samples"]) >= 3:
+    OPTIONAL_TARGETS.extend([
+        config["params"]["vcf2dis"]["output_matrix"],
+        config["params"]["vcf2dis"]["output_tree"],
+    ])
+
+if config["params"].get("snpeff", {}).get("enabled", False):
+    SNPEFF_PREFIX = config["params"]["snpeff"].get("output_prefix", "annotation/combined")
+    OPTIONAL_TARGETS.append(
+        config["params"]["snpeff"].get("database_done", "annotation/snpeff_db.done")
+    )
+    if config["params"]["snpeff"].get("annotate_snp", True):
+        OPTIONAL_TARGETS.extend([
+            SNPEFF_PREFIX + ".snp.snpeff.vcf.gz",
+            SNPEFF_PREFIX + ".snp.snpeff.vcf.gz.tbi",
+            SNPEFF_PREFIX + ".snp.snpeff.html",
+            SNPEFF_PREFIX + ".snp.snpeff.genes.txt",
+        ])
+    if config["params"]["snpeff"].get("annotate_indel", False):
+        OPTIONAL_TARGETS.extend([
+            SNPEFF_PREFIX + ".indel.snpeff.vcf.gz",
+            SNPEFF_PREFIX + ".indel.snpeff.vcf.gz.tbi",
+            SNPEFF_PREFIX + ".indel.snpeff.html",
+            SNPEFF_PREFIX + ".indel.snpeff.genes.txt",
+        ])
+
+rule all:
+    input:
+        "reports/precheck.done",
+        "result_vcfs/combined.vcf.gz",
+        "result_vcfs/combined.indel.filtered.vcf.gz",
+        "result_vcfs/combined.snp.filtered.vcf.gz",
+        config["params"]["vcf_missing"]["plot_prefix"] + ".sample_missing.pdf",
+        config["params"]["vcf_missing"]["plot_prefix"] + ".Variant_missing.pdf",
+        config["params"]["vcf_convert"]["output_prefix"] + ".bed",
+        config["params"]["vcf_convert"]["output_prefix"] + ".bim",
+        config["params"]["vcf_convert"]["output_prefix"] + ".fam",
+        config["params"]["vcf_convert"]["output_prefix"] + ".ped",
+        config["params"]["vcf_convert"]["output_prefix"] + ".map",
+        config["params"]["vcf_convert"]["output_prefix"] + ".hmp.txt",
+        OPTIONAL_TARGETS,
+        "reports/ParaChrSNP_report.html",
+        "reports/ParaChrSNP_summary.tsv"
+
+include: "rules/vcf_entry_2.rules"
+include: "rules/faidx_index.rules"
+include: "rules/vcf_missing.rules"
+include: "rules/vcf_convert.rules"
+include: "rules/imputation.rules"
+include: "rules/pi.rules"
+include: "rules/snp_density.rules"
+include: "rules/admixture.rules"
+include: "rules/ld_decay.rules"
+include: "rules/vcf2pca.rules"
+include: "rules/vcf2dis_1.rules"
+include: "rules/snpeff.rules"
+include: "rules/report_vcf_1.rules"

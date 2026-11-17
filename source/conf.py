@@ -9,7 +9,8 @@
 project = 'Parachrsnp'
 copyright = '2026, Junpeng Ma'
 author = 'Junpeng Ma'
-release = '1.0.0'
+version = '0.1.1'
+release = '0.1.1'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

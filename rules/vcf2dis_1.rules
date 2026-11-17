@@ -1,0 +1,61 @@
+# 原始规则：rules/vcf2dis.rules。
+# 修改要求：恢复 VCF2Dis 为长样本名生成的短标识，保持矩阵和树使用真实样本名。
+rule vcf2dis:
+    input:
+        vcf="result_vcfs/combined.snp.filtered.vcf.gz",
+        sample_group=lambda wildcards: [config["params"]["vcf2dis"].get("sample_group")] if config["params"]["vcf2dis"].get("sample_group") else []
+    output:
+        matrix=config["params"]["vcf2dis"]["output_matrix"],
+        tree=config["params"]["vcf2dis"]["output_tree"]
+    params:
+        executable=config["params"]["vcf2dis"]["executable"],
+        tree_method=config["params"]["vcf2dis"].get("tree_method", 1),
+        extra=config["params"]["vcf2dis"].get("extra", ""),
+        sample_count=len(config["samples"]),
+        sample_group_arg=lambda wildcards, input: f"-InSampleGroup {input.sample_group}" if input.sample_group else ""
+    log:
+        "logs/vcf2dis/vcf2dis.log"
+    shell:
+        r"""
+        mkdir -p $(dirname {output.matrix})
+
+        if [ {params.sample_count} -lt 3 ]; then
+            echo "VCF2Dis requires at least 3 samples to build a distance tree, but config.yaml contains {params.sample_count} sample(s)." > {log}
+            echo "Set params.vcf2dis.enabled: false for small test datasets, or provide at least 3 samples." >> {log}
+            exit 1
+        fi
+
+        {params.executable} \
+            -InPut {input.vcf} \
+            -OutPut {output.matrix} \
+            {params.sample_group_arg} \
+            -TreeMethod {params.tree_method} \
+            {params.extra} \
+            > {log} 2>&1
+
+        python3 - {log:q} {output.matrix:q} {output.tree:q} <<'PY'
+import pathlib
+import re
+import sys
+
+log, matrix, tree = map(pathlib.Path, sys.argv[1:])
+# 从工具记录的映射恢复名称，不根据样本排序猜测对应关系。
+pairs = re.findall(r"Sample name too long \[ (.*?) \].*new Name is (\S+)", log.read_text())
+mapping = dict((short, original) for original, short in pairs)
+if len(mapping) != len(pairs):
+    raise ValueError("VCF2Dis generated colliding short sample IDs")
+lines = matrix.read_text().splitlines()
+for i in range(1, len(lines)):
+    fields = lines[i].split(maxsplit=1)
+    if fields:
+        lines[i] = mapping.get(fields[0], fields[0]) + "\t" + fields[1]
+matrix.write_text("\n".join(lines) + "\n")
+def restore(match):
+    label = mapping.get(match.group(1), match.group(1))
+    # Newick 对特殊字符名称使用单引号编码。
+    if re.search(r"[\s():,;\[\]']", label):
+        label = "'" + label.replace("'", "''") + "'"
+    return label
+tree.write_text(re.sub(r"(?<=[(,])([^():,]+)(?=:)", restore, tree.read_text()))
+PY
+        """

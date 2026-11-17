@@ -1,0 +1,84 @@
+# 原始规则：rules/vcf_entry_1.rules。
+# 修改要求：分析前验证记录内容和参考名称，校验失败时不写成功标记。
+rule precheck_vcf:
+    input:
+        vcf=VCF_INPUT,
+        reference=config["reference"],
+        config=ACTIVE_CONFIGFILE
+    output:
+        done="reports/precheck.done",
+        tsv="reports/precheck.tsv",
+        html="reports/precheck.html",
+        config="reports/vcf.config.yaml"
+    run:
+        import yaml
+        # 从原始参考读取名称，不依赖可能过期或尚未创建的索引。
+        open_reference = gzip.open if str(input.reference).endswith(".gz") else open
+        with open_reference(input.reference, "rt") as handle:
+            reference_names = set(line[1:].split()[0] for line in handle if line.startswith(">"))
+        open_vcf = gzip.open if str(input.vcf).endswith(".gz") else open
+        record_count = 0
+        with open_vcf(input.vcf, "rt") as handle:
+            for line in handle:
+                if line.startswith("#"):
+                    continue
+                fields = line.rstrip("\n").split("\t")
+                if len(fields) != 9 + len(config["samples"]):
+                    raise ValueError("VCF record has an incorrect number of sample columns")
+                if fields[0] not in reference_names:
+                    raise ValueError("VCF contig is absent from the reference FASTA: " + fields[0])
+                if set(fields[4].split(",")) & {"<NON_REF>", "<*>"}:
+                    raise ValueError("gVCF reference blocks are unsupported; supply a genotyped cohort VCF")
+                if "GT" not in fields[8].split(":"):
+                    raise ValueError("VCF record is missing FORMAT/GT at " + fields[0] + ":" + fields[1])
+                record_count += 1
+        if not record_count:
+            raise ValueError("Input VCF contains no variant records")
+        os.makedirs("reports", exist_ok=True)
+        with open(output.config, "w") as handle:
+            yaml.safe_dump(dict(config), handle, allow_unicode=True)
+        with open(output.done, "w") as handle:
+            handle.write("VCF header validated; samples read from input VCF.\n")
+        with open(output.tsv, "w") as handle:
+            handle.write("check\tstatus\tdetail\n")
+            handle.write(f"vcf_header\tPASS\t{len(config['samples'])} samples; GT declared\n")
+        with open(output.html, "w") as handle:
+            handle.write("<!doctype html><html><body><h1>VCF input precheck</h1>")
+            handle.write(f"<p>PASS: {len(config['samples'])} samples; GT declared.</p></body></html>")
+
+
+rule stage_vcf:
+    input:
+        vcf=VCF_INPUT,
+        precheck="reports/precheck.done"
+    output:
+        vcf="result_vcfs/combined.vcf.gz",
+        index="result_vcfs/combined.vcf.gz.tbi"
+    log:
+        "logs/vcf_input/stage.log"
+    shell:
+        """
+        mkdir -p result_vcfs logs/vcf_input
+        bcftools sort {input.vcf:q} -Oz -o {output.vcf:q} > {log:q} 2>&1
+        bcftools index --tbi {output.vcf:q} >> {log:q} 2>&1
+        """
+
+
+rule select_vcf_for_analysis:
+    input:
+        vcf="result_vcfs/combined.vcf.gz",
+        index="result_vcfs/combined.vcf.gz.tbi"
+    output:
+        snp="result_vcfs/combined.snp.filtered.vcf.gz",
+        snp_index="result_vcfs/combined.snp.filtered.vcf.gz.tbi",
+        indel="result_vcfs/combined.indel.filtered.vcf.gz",
+        indel_index="result_vcfs/combined.indel.filtered.vcf.gz.tbi"
+    log:
+        "logs/vcf_input/select.log"
+    shell:
+        """
+        bcftools view -f PASS,. -m2 -M2 -v snps {input.vcf:q} -Oz -o {output.snp:q} > {log:q} 2>&1
+        bcftools index --tbi {output.snp:q} >> {log:q} 2>&1
+        bcftools view -f PASS,. -v indels {input.vcf:q} -Oz -o {output.indel:q} >> {log:q} 2>&1
+        bcftools index --tbi {output.indel:q} >> {log:q} 2>&1
+        """

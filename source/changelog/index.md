@@ -2,7 +2,20 @@
 
 This page summarizes user-visible ParaChrSNP changes reflected in the current
 repository. Dates describe repository development milestones rather than a
-formal semantic-version release series.
+formal semantic-version release series before v0.1.1.
+
+## v0.1.1 - 2026-11-17
+
+- Added `Snakefile.downstream` and `config.downstream.example.yaml` for
+  independent analyses from an existing cohort VCF, without upstream settings.
+- Added record-level validation, input/output collision protection, and
+  reports that distinguish VCF-derived results from unavailable read metrics.
+- Preserved full sample IDs in distance matrices and Newick trees.
+- Added English and Chinese tutorials covering separate work directories,
+  explicit container mounts, temporary directories, and Python/R isolation.
+- Tested the existing full cohort with downstream modules, region-level
+  SnpEff/Beagle integration, and report-only resume without upstream reruns.
+- Kept the existing FASTQ/BAM workflow and container image unchanged.
 
 ## 2026-09-28
 
